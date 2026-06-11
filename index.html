@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icono.jpg" type="image/jpeg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MAPA-REGISTRAL">
+    <link rel="apple-touch-icon" href="icono.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <title>Mapa Registral</title>
+    <style>
+      :root {
+        --bg:       #0f1117;
+        --s1:       #181c27;
+        --s2:       #1e2336;
+        --s3:       #232840;
+        --s4:       #28304a;
+        --border:   #2c3248;
+        --border2:  #3d4560;
+        --text:     #e8eaf0;
+        --muted:    #7a82a0;
+        --accent:   #4f8ef7;
+        --c-mat:    #4f8ef7;
+        --c-vta:    #6a7ab8;
+        --c-seg:    #c05621;
+        --c-her:    #b89020;
+        --c-don:    #2e7d5e;
+        --c-reu:    #1e6b7a;
+        --c-per:    #7c5cbf;
+        --font-mono:'JetBrains Mono','Fira Mono','Consolas',monospace;
+        --font-ui:  'Inter','Segoe UI',system-ui,sans-serif;
+      }
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{background:var(--bg);color:var(--text);font-family:var(--font-ui);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+      /* TOP BAR */
+      .topbar{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;}
+      .topbar-title{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);letter-spacing:.08em;white-space:nowrap;flex-shrink:0;}
+      .topbar-sep{width:1px;height:18px;background:var(--border2);}
+      .topbar-actions{display:flex;gap:.4rem;margin-left:auto;flex-wrap:wrap;}
+      .btn{font-family:var(--font-ui);font-size:.7rem;padding:.3rem .75rem;border-radius:5px;border:1px solid var(--border2);background:var(--s2);color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;white-space:nowrap;}
+      .btn:hover{border-color:var(--accent);background:#1e2640;}
+      .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+      .btn-primary:hover{background:#3d7de8;}
+      .btn-danger{border-color:#c0392b;color:#e87070;}
+      .btn-danger:hover{background:rgba(192,57,43,.15);}
+
+      /* WORKSPACE */
+      .workspace{flex:1;display:flex;overflow:hidden;}
+
+      /* PANEL FORMULARIO */
+      .panel{width:276px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+      .panel-head{padding:.8rem .9rem .65rem;border-bottom:1px solid var(--border);}
+      .panel-head h2{font-size:.67rem;font-family:var(--font-mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:.55rem;}
+      .field{margin-bottom:.6rem;}
+      .field label{display:block;font-size:.58rem;font-family:var(--font-mono);color:var(--muted);letter-spacing:.06em;margin-bottom:.22rem;text-transform:uppercase;}
+      .field input,.field textarea,.field select{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--font-mono);font-size:.72rem;padding:.38rem .55rem;outline:none;transition:border-color .15s;resize:none;}
+      .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);}
+      .field textarea{min-height:58px;line-height:1.5;}
+      .tipo-strip{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.6rem;}
+      .tipo-opt{font-size:.58rem;font-family:var(--font-mono);padding:.2rem .45rem;border-radius:20px;border:1px solid var(--border2);cursor:pointer;transition:all .15s;color:var(--muted);}
+      .tipo-opt:hover{color:var(--text);}
+      .tipo-opt.sel{color:#fff;font-weight:600;}
+      .tipo-opt[data-t="matricula"].sel  {background:var(--c-mat);border-color:var(--c-mat);}
+      .tipo-opt[data-t="compraventa"].sel{background:var(--c-vta);border-color:var(--c-vta);}
+      .tipo-opt[data-t="segregacion"].sel{background:var(--c-seg);border-color:var(--c-seg);}
+      .tipo-opt[data-t="herencia"].sel   {background:var(--c-her);border-color:var(--c-her);}
+      .tipo-opt[data-t="donacion"].sel   {background:var(--c-don);border-color:var(--c-don);}
+      .tipo-opt[data-t="reunion"].sel    {background:var(--c-reu);border-color:var(--c-reu);}
+      .tipo-opt[data-t="persona"].sel    {background:var(--c-per);border-color:var(--c-per);}
+
+      /* autocomplete */
+      .ac-wrap{position:relative;}
+      .ac-list{position:absolute;top:100%;left:0;right:0;z-index:500;background:var(--s2);border:1px solid var(--border2);border-top:none;border-radius:0 0 5px 5px;max-height:120px;overflow-y:auto;display:none;}
+      .ac-list.open{display:block;}
+      .ac-item{padding:.32rem .55rem;font-size:.68rem;font-family:var(--font-mono);cursor:pointer;display:flex;gap:.45rem;align-items:center;}
+      .ac-item:hover{background:var(--border);}
+      .ac-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+      /* ÁRBOL — contenedor scrollable */
+      .tree-wrap{flex:1;overflow-y:auto;overflow-x:hidden;padding:.5rem .5rem .5rem .3rem;}
+
+      /* ── TARJETAS ANIDADAS ── */
+      .tree-root{display:flex;flex-direction:column;gap:1.2rem;padding:.2rem;}
+
+      /* Cada nodo es una tarjeta */
+      .card{
+        border-radius:8px;
+        border:1.5px solid var(--border2);
+        background:var(--s1);
+        overflow:hidden;
+        transition:border-color .15s,box-shadow .15s;
+      }
+      .card:hover{border-color:var(--border2);}
+      .card.depth-0{background:var(--s1);}
+      .card.depth-1{background:var(--s2);}
+      .card.depth-2{background:var(--s3);}
+      .card.depth-3{background:var(--s4);}
+      /* profundidad > 3 reutiliza s4 */
+
+      /* Cabecera de la tarjeta */
+      .card-head{
+        display:flex;align-items:flex-start;gap:.5rem;
+        padding:.6rem .7rem .5rem;
+        cursor:pointer;
+        user-select:none;
+        position:relative;
+      }
+      .card-head:hover .card-actions{opacity:1;}
+
+      /* Indicador de orden (fecha) a la izquierda */
+      .card-order{
+        font-family:var(--font-mono);
+        font-size:.58rem;
+        color:var(--muted);
+        background:var(--border);
+        border-radius:4px;
+        padding:.18rem .42rem;
+        white-space:nowrap;
+        flex-shrink:0;
+        margin-top:.1rem;
+        letter-spacing:.03em;
+      }
+
+      /* Tipo badge */
+      .card-tipo{
+        font-size:.54rem;font-family:var(--font-mono);letter-spacing:.07em;
+        text-transform:uppercase;padding:.12rem .38rem;border-radius:20px;
+        color:#fff;flex-shrink:0;margin-top:.1rem;white-space:nowrap;
+      }
+
+      /* Contenido principal */
+      .card-body{flex:1;min-width:0;}
+      .card-label{
+        font-family:var(--font-mono);font-size:.76rem;font-weight:700;
+        line-height:1.3;word-break:break-word;
+      }
+      .card-detail{
+        font-size:.63rem;color:var(--muted);line-height:1.55;
+        white-space:pre-wrap;word-break:break-word;
+        margin-top:.22rem;
+        max-height:2.9em;overflow:hidden;
+        mask-image:linear-gradient(to bottom,black 40%,transparent 100%);
+        -webkit-mask-image:linear-gradient(to bottom,black 40%,transparent 100%);
+        transition:max-height .2s ease;
+      }
+      .card-detail.expanded{max-height:600px;mask-image:none;-webkit-mask-image:none;}
+      .card-detail-toggle{
+        font-size:.56rem;font-family:var(--font-mono);color:var(--accent);
+        cursor:pointer;margin-top:.15rem;display:inline-block;
+      }
+
+      /* Chevron expansión hijos */
+      .card-chevron{
+        font-size:.7rem;color:var(--muted);flex-shrink:0;
+        margin-top:.12rem;transition:transform .2s;
+        width:14px;text-align:center;
+      }
+      .card.open > .card-head .card-chevron{transform:rotate(90deg);}
+
+      /* Acciones hover */
+      .card-actions{
+        display:flex;gap:.2rem;opacity:0;transition:opacity .15s;
+        position:absolute;top:.4rem;right:.4rem;
+      }
+      .card-btn{
+        width:18px;height:18px;border-radius:4px;border:none;
+        background:var(--s2);color:var(--muted);font-size:.58rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        transition:background .12s,color .12s;
+      }
+      .card-btn:hover{background:var(--border2);color:var(--text);}
+      .card-btn.del:hover{background:rgba(192,57,43,.3);color:#e87070;}
+
+      /* Hijos anidados */
+      .card-children{
+        display:none;
+        flex-direction:column;gap:.7rem;
+        padding:.2rem .7rem .7rem .9rem;
+        border-top:1px solid var(--border);
+      }
+      .card.open > .card-children{display:flex;}
+
+      /* Contador de hijos */
+      .card-count{
+        font-size:.55rem;font-family:var(--font-mono);
+        background:var(--border2);color:var(--muted);
+        border-radius:20px;padding:.1rem .38rem;
+        margin-left:.3rem;flex-shrink:0;margin-top:.15rem;
+      }
+
+      /* Borde izquierdo según tipo */
+      .card[data-tipo="segregacion"] > .card-head{border-left:3px solid var(--c-seg);padding-left:.55rem;}
+      .card[data-tipo="herencia"]    > .card-head{border-left:3px solid var(--c-her);padding-left:.55rem;}
+      .card[data-tipo="donacion"]    > .card-head{border-left:3px solid var(--c-don);padding-left:.55rem;}
+      .card[data-tipo="reunion"]     > .card-head{border-left:3px solid var(--c-reu);padding-left:.55rem;}
+      .card[data-tipo="compraventa"] > .card-head{border-left:3px solid var(--c-vta);padding-left:.55rem;}
+      .card[data-tipo="matricula"]   > .card-head{border-left:3px solid var(--c-mat);padding-left:.55rem;}
+      .card[data-tipo="persona"]     > .card-head{border-left:3px solid var(--c-per);padding-left:.55rem;}
+
+      /* Estado vacío */
+      .empty-state{
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        height:100%;gap:.6rem;opacity:.3;pointer-events:none;
+      }
+      .empty-state .icon{font-size:2.4rem;}
+      .empty-state p{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);text-align:center;}
+
+      /* MODAL */
+      .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:300;align-items:center;justify-content:center;display:none;}
+      .modal-overlay.open{display:flex;}
+      .modal{background:var(--s1);border:1px solid var(--border2);border-radius:10px;padding:1.1rem 1.2rem;width:340px;max-width:95vw;}
+      .modal h3{font-size:.78rem;font-family:var(--font-mono);color:var(--accent);margin-bottom:.85rem;}
+      .modal-btns{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.85rem;}
+
+      ::-webkit-scrollbar{width:4px;}
+      ::-webkit-scrollbar-track{background:transparent;}
+      ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+    </style>
+  </head>
+  <body>
+
+    <div class="topbar">
+      <span class="topbar-title">◈ MAPA REGISTRAL</span>
+      <div class="topbar-sep"></div>
+      <span id="stats-label" style="font-size:.64rem;color:var(--muted);font-family:var(--font-mono)">0 nodos</span>
+      <div class="topbar-actions">
+        <button class="btn" onclick="expandAll()">⊞ Expandir todo</button>
+        <button class="btn" onclick="collapseAll()">⊟ Colapsar todo</button>
+        <button class="btn" onclick="exportJSON()">↓ Exportar</button>
+        <button class="btn" onclick="importClick()">↑ Importar</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+        <button class="btn btn-danger" onclick="clearAll()">✕ Limpiar</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+
+      <!-- PANEL FORM -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Nuevo nodo</h2>
+          <div class="field">
+            <label>Tipo</label>
+            <div class="tipo-strip">
+              <span class="tipo-opt sel" data-t="matricula">Matrícula</span>
+              <span class="tipo-opt" data-t="compraventa">Compraventa</span>
+              <span class="tipo-opt" data-t="segregacion">Segregación</span>
+              <span class="tipo-opt" data-t="herencia">Herencia</span>
+              <span class="tipo-opt" data-t="donacion">Donación</span>
+              <span class="tipo-opt" data-t="reunion">Reunión</span>
+              <span class="tipo-opt" data-t="persona">Persona</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Identificador</label>
+            <input id="inp-id" type="text" placeholder="Matrícula, año, Venta…">
+          </div>
+          <div class="field">
+            <label>Fecha / Orden</label>
+            <input id="inp-fecha" type="text" placeholder="año dd/mm/año">
+          </div>
+          <div class="field">
+            <label>Nodo padre (opcional)</label>
+            <div class="ac-wrap">
+              <input id="inp-padre" type="text" placeholder="Buscar…" autocomplete="off"
+                     oninput="onAC('inp-padre','ac-main')" onfocus="onAC('inp-padre','ac-main')">
+              <div class="ac-list" id="ac-main"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Detalle / Observaciones</label>
+            <textarea id="inp-detail" placeholder="Precio, área, partes, notas…"></textarea>
+          </div>
+          <button class="btn btn-primary" style="width:100%" onclick="addNode()">＋ Agregar nodo</button>
+        </div>
+        <!-- árbol en el panel inferior -->
+        <div class="tree-wrap" id="tree-wrap">
+          <div class="empty-state" id="empty-state">
+            <div class="icon">⬡</div>
+            <p>Agrega un nodo<br>para comenzar</p>
+          </div>
+          <div class="tree-root" id="tree-root"></div>
+        </div>
+      </div>
+
+      <!-- ÁREA PRINCIPAL: árbol expandido -->
+      <div style="flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);padding:1.4rem 1.6rem;" id="main-area">
+        <div class="empty-state" id="main-empty" style="height:100%;">
+          <div class="icon">⬡</div>
+          <p>Agrega nodos desde el panel<br>para construir el mapa</p>
+        </div>
+        <div id="main-tree" style="display:flex;flex-direction:column;gap:1.4rem;"></div>
+      </div>
+
+    </div>
+
+    <!-- MODAL EDITAR -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal">
+        <h3>✎ Editar nodo</h3>
+        <div class="field">
+          <label>Tipo</label>
+          <select id="m-tipo">
+            <option value="matricula">Matrícula</option>
+            <option value="compraventa">Compraventa</option>
+            <option value="segregacion">Segregación</option>
+            <option value="herencia">Herencia</option>
+            <option value="donacion">Donación</option>
+            <option value="reunion">Reunión</option>
+            <option value="persona">Persona</option>
+          </select>
+        </div>
+        <div class="field"><label>Identificador</label><input id="m-id" type="text"></div>
+        <div class="field"><label>Fecha / Orden</label><input id="m-fecha" type="text"></div>
+        <div class="field">
+          <label>Padre</label>
+          <div class="ac-wrap">
+            <input id="m-padre" type="text" placeholder="Sin padre…" autocomplete="off"
+                   oninput="onAC('m-padre','ac-modal')" onfocus="onAC('m-padre','ac-modal')">
+            <div class="ac-list" id="ac-modal"></div>
+          </div>
+        </div>
+        <div class="field"><label>Detalle</label><textarea id="m-detail"></textarea></div>
+        <div class="modal-btns">
+          <button class="btn" onclick="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveEdit()">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ═══════════════════════════════════
+      //  ESTADO & PERSISTENCIA
+      // ═══════════════════════════════════
+      const LS_KEY = 'mapa-registral-v3';
+      const TYPE_COLOR = {
+        matricula:'#4f8ef7', compraventa:'#6a7ab8', persona:'#7c5cbf',
+        segregacion:'#c05621', herencia:'#b89020', donacion:'#2e7d5e', reunion:'#1e6b7a',
+      };
+
+      let nodes        = [];   // { id, tipo, label, fecha, padreId, detail }
+      let openSet      = new Set();   // ids con hijos expandidos
+      let detailOpenSet= new Set();   // ids con detalle expandido
+      let selectedTipo = 'matricula';
+      let editingId    = null;
+      let _acPadreId   = null;
+      let _acMPadreId  = null;
+
+      function save() { localStorage.setItem(LS_KEY, JSON.stringify({ nodes: nodes, open: Array.from(openSet) })); }
+      function load() {
+        try {
+          const r = localStorage.getItem(LS_KEY);
+          if (!r) return;
+          const d = JSON.parse(r);
+          if (Array.isArray(d)) { nodes = d; }
+          else { nodes = d.nodes || []; openSet = new Set(d.open || []); }
+        } catch(e) { nodes = []; }
+      }
+
+      // ═══════════════════════════════════
+      //  TIPO SELECTOR
+      // ═══════════════════════════════════
+      document.querySelectorAll('.tipo-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.tipo-opt').forEach(x=>x.classList.remove('sel'));
+          el.classList.add('sel');
+          selectedTipo = el.dataset.t;
+        });
+      });
+
+      // ═══════════════════════════════════
+      //  AUTOCOMPLETE
+      // ═══════════════════════════════════
+      function onAC(inputId, listId) {
+        const inp = document.getElementById(inputId);
+        const lst = document.getElementById(listId);
+        const q   = inp.value.trim().toLowerCase();
+        const exc = (listId === 'ac-modal') ? editingId : null;
+        const m   = nodes.filter(n => n.id!==exc && n.label.toLowerCase().includes(q)).slice(0,10);
+        if (!m.length) { lst.classList.remove('open'); return; }
+        lst.innerHTML = m.map(n =>
+                              `<div class="ac-item" onclick="pickPadre('${esc(n.id)}','${esc(n.label)}','${listId}')">
+       <span class="ac-dot" style="background:${TYPE_COLOR[n.tipo]||'#888'}"></span>
+       <span>${esc(n.label)}</span></div>`).join('');
+        lst.classList.add('open');
+      }
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.ac-wrap'))
+          document.querySelectorAll('.ac-list').forEach(l=>l.classList.remove('open'));
+      });
+      function pickPadre(id, label, listId) {
+        const lst = document.getElementById(listId);
+        lst.previousElementSibling.value = label;
+        lst.classList.remove('open');
+        if (listId==='ac-main')  _acPadreId  = id;
+        if (listId==='ac-modal') _acMPadreId = id;
+      }
+      function resolvePadre(inputId, cached) {
+        if (cached) return cached;
+        const v = document.getElementById(inputId).value.trim();
+        if (!v) return null;
+        const f = nodes.find(n => n.label.toLowerCase()===v.toLowerCase());
+        return f ? f.id : null;
+      }
+
+      // ═══════════════════════════════════
+      //  CRUD
+      // ═══════════════════════════════════
+      function addNode() {
+        const label = document.getElementById('inp-id').value.trim();
+        if (!label) { document.getElementById('inp-id').focus(); return; }
+        const node = {
+          id:      crypto.randomUUID(),
+          tipo:    selectedTipo,
+          label,
+          fecha:   document.getElementById('inp-fecha').value.trim(),
+          padreId: resolvePadre('inp-padre', _acPadreId),
+          detail:  document.getElementById('inp-detail').value.trim(),
+        };
+        nodes.push(node);
+        // Auto-abrir el padre
+        if (node.padreId) openSet.add(node.padreId);
+        save(); render();
+        // Limpiar form
+        ['inp-id','inp-fecha','inp-padre','inp-detail'].forEach(id => document.getElementById(id).value='');
+        _acPadreId = null;
+      }
+
+      function deleteNode(id) {
+        // reasignar hijos al abuelo
+        const n = nodes.find(x=>x.id===id); if (!n) return;
+        nodes.forEach(x=>{ if(x.padreId===id) x.padreId=n.padreId; });
+        nodes = nodes.filter(x=>x.id!==id);
+        openSet.delete(id); detailOpenSet.delete(id);
+        save(); render();
+      }
+
+      // ═══════════════════════════════════
+      //  MODAL EDITAR
+      // ═══════════════════════════════════
+      function openModal(id) {
+        const n = nodes.find(x=>x.id===id); if (!n) return;
+        editingId = id;
+        document.getElementById('m-tipo').value   = n.tipo;
+        document.getElementById('m-id').value     = n.label;
+        document.getElementById('m-fecha').value  = n.fecha||'';
+        document.getElementById('m-detail').value = n.detail||'';
+        _acMPadreId = n.padreId;
+        const padre = n.padreId ? nodes.find(x=>x.id===n.padreId) : null;
+        document.getElementById('m-padre').value  = padre ? padre.label : '';
+        document.getElementById('modal').classList.add('open');
+      }
+      function closeModal() {
+        document.getElementById('modal').classList.remove('open');
+        editingId=null; _acMPadreId=null;
+      }
+      function saveEdit() {
+        const n=nodes.find(x=>x.id===editingId); if(!n) return;
+        const newPadreId = resolvePadre('m-padre', _acMPadreId);
+        // Si cambió el padre, abrir el nuevo padre
+        if (newPadreId && newPadreId!==n.padreId) openSet.add(newPadreId);
+        n.tipo    = document.getElementById('m-tipo').value;
+        n.label   = document.getElementById('m-id').value.trim()||n.label;
+        n.fecha   = document.getElementById('m-fecha').value.trim();
+        n.detail  = document.getElementById('m-detail').value.trim();
+        n.padreId = newPadreId;
+        save(); closeModal(); render();
+      }
+      document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
+
+      // ═══════════════════════════════════
+      //  TOGGLE
+      // ═══════════════════════════════════
+      function toggleOpen(id) {
+        openSet.has(id) ? openSet.delete(id) : openSet.add(id);
+        save(); render();
+      }
+      function toggleDetail(id) {
+        detailOpenSet.has(id) ? detailOpenSet.delete(id) : detailOpenSet.add(id);
+        render();
+      }
+      function expandAll()   { nodes.forEach(n=>{ const kids=nodes.filter(x=>x.padreId===n.id); if(kids.length) openSet.add(n.id); }); save(); render(); }
+      function collapseAll() { openSet.clear(); save(); render(); }
+
+      // ═══════════════════════════════════
+      //  CONSTRUIR ÁRBOL DOM
+      // ═══════════════════════════════════
+
+      // Ordena hijos por fecha (parseo simple: extrae primer número de 4 dígitos como año, luego compara string)
+      function sortByFecha(arr) {
+        return [...arr].sort((a,b)=>{
+          const ya = parseInt((a.fecha||'').match(/\d{4}/)?.[0]||'9999');
+          const yb = parseInt((b.fecha||'').match(/\d{4}/)?.[0]||'9999');
+          if (ya !== yb) return ya-yb;
+          return (a.fecha||'').localeCompare(b.fecha||'');
+        });
+      }
+
+      function buildCard(node, depth, childMap) {
+        const color    = TYPE_COLOR[node.tipo]||'#888';
+        const children = sortByFecha(childMap[node.id]||[]);
+        const hasKids  = children.length > 0;
+        const isOpen   = openSet.has(node.id);
+        const detOpen  = detailOpenSet.has(node.id);
+        const hasDetail= !!(node.detail && node.detail.trim());
+        const detLines = (node.detail||'').split('\n').length;
+        const detShort = detLines <= 2;
+
+        const card = document.createElement('div');
+        card.className = `card depth-${Math.min(depth,3)}${isOpen?' open':''}`;
+        card.dataset.id   = node.id;
+        card.dataset.tipo = node.tipo;
+
+        // HEAD
+        const head = document.createElement('div');
+        head.className = 'card-head';
+        head.onclick = (e) => {
+          if (e.target.closest('.card-actions')) return;
+          if (e.target.closest('.card-detail-toggle')) return;
+          if (hasKids) toggleOpen(node.id);
+        };
+
+        // Fecha/orden
+        const orderEl = document.createElement('div');
+        orderEl.className = 'card-order';
+        orderEl.textContent = node.fecha || '—';
+
+        // Tipo badge
+        const tipoEl = document.createElement('span');
+        tipoEl.className = 'card-tipo';
+        tipoEl.style.background = color;
+        tipoEl.textContent = node.tipo;
+
+        // Body
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'card-body';
+
+        const labelEl = document.createElement('div');
+        labelEl.className = 'card-label';
+        labelEl.textContent = node.label;
+
+        bodyEl.appendChild(labelEl);
+
+        if (hasDetail) {
+          const detEl = document.createElement('div');
+          detEl.className = 'card-detail' + (detOpen?' expanded':'');
+          detEl.id = 'det-'+node.id;
+          detEl.textContent = node.detail;
+          bodyEl.appendChild(detEl);
+
+          if (!detShort) {
+            const tog = document.createElement('div');
+            tog.className = 'card-detail-toggle';
+            tog.textContent = detOpen ? '▴ ver menos' : '▾ ver más';
+            tog.onclick = (e) => { e.stopPropagation(); toggleDetail(node.id); };
+            bodyEl.appendChild(tog);
+          }
+        }
+
+        // Chevron + contador
+        const chevEl = document.createElement('div');
+        chevEl.className = 'card-chevron';
+        if (hasKids) {
+          chevEl.textContent = '▶';
+          const cnt = document.createElement('span');
+          cnt.className = 'card-count';
+          cnt.textContent = children.length;
+          chevEl.appendChild(cnt);
+        }
+
+        // Acciones
+        const actEl = document.createElement('div');
+        actEl.className = 'card-actions';
+        actEl.innerHTML = `
+    <button class="card-btn" onclick="openModal('${node.id}')" title="Editar">✎</button>
+    <button class="card-btn del" onclick="deleteNode('${node.id}')" title="Eliminar">✕</button>`;
+
+        head.appendChild(orderEl);
+        head.appendChild(tipoEl);
+        head.appendChild(bodyEl);
+        head.appendChild(chevEl);
+        head.appendChild(actEl);
+        card.appendChild(head);
+
+        // HIJOS
+        if (hasKids) {
+          const childrenEl = document.createElement('div');
+          childrenEl.className = 'card-children';
+          children.forEach(child => {
+            childrenEl.appendChild(buildCard(child, depth+1, childMap));
+          });
+          card.appendChild(childrenEl);
+        }
+
+        return card;
+      }
+
+      // ═══════════════════════════════════
+      //  RENDER PRINCIPAL
+      // ═══════════════════════════════════
+      function render() {
+        const mainTree  = document.getElementById('main-tree');
+        const mainEmpty = document.getElementById('main-empty');
+        const statsEl   = document.getElementById('stats-label');
+
+        mainTree.innerHTML = '';
+
+        statsEl.textContent = nodes.length===1?'1 nodo':`${nodes.length} nodos`;
+
+        if (!nodes.length) {
+          mainEmpty.style.display = 'flex';
+          mainTree.style.display  = 'none';
+          document.getElementById('empty-state').style.display = 'flex';
+          document.getElementById('tree-root').innerHTML = '';
+          return;
+        }
+        mainEmpty.style.display = 'none';
+        mainTree.style.display  = 'flex';
+        document.getElementById('empty-state').style.display = 'none';
+
+        // Construir mapa de hijos
+        const childMap = {};
+        nodes.forEach(n=>{ childMap[n.id]=[]; });
+        nodes.forEach(n=>{ if(n.padreId && childMap[n.padreId]) childMap[n.padreId].push(n); });
+
+        // Raíces: nodos sin padre válido
+        const roots = sortByFecha(nodes.filter(n => !n.padreId || !nodes.some(x=>x.id===n.padreId)));
+
+        // Renderizar en área principal
+        roots.forEach(r => mainTree.appendChild(buildCard(r, 0, childMap)));
+
+        // Mini-árbol en el panel (solo etiquetas, más compacto)
+        renderMiniTree(roots, childMap);
+      }
+
+      // Mini árbol en panel izquierdo (solo para orientación)
+      function renderMiniTree(roots, childMap) {
+        const root = document.getElementById('tree-root');
+        root.innerHTML = '';
+
+        function miniNode(n, depth) {
+          const color = TYPE_COLOR[n.tipo]||'#888';
+          const kids  = sortByFecha(childMap[n.id]||[]);
+
+          const wrap = document.createElement('div');
+          wrap.style.cssText = `padding-left:${depth*12}px;margin-bottom:2px;`;
+
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;gap:.35rem;padding:.22rem .3rem;border-radius:4px;cursor:pointer;transition:background .1s;';
+          row.onmouseenter = ()=>row.style.background='var(--s2)';
+          row.onmouseleave = ()=>row.style.background='transparent';
+          row.onclick = () => {
+            // Scroll al nodo en el árbol principal
+            const el = document.querySelector(`[data-id="${n.id}"]`);
+            if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+          };
+          row.innerHTML = `
+      <span style="width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+      <span style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted);flex-shrink:0;">${n.fecha||'—'}</span>
+      <span style="font-family:var(--font-mono);font-size:.62rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(n.label)}</span>`;
+          wrap.appendChild(row);
+
+          kids.forEach(k => wrap.appendChild(miniNode(k, depth+1)));
+          return wrap;
+        }
+
+        roots.forEach(r => root.appendChild(miniNode(r, 0)));
+      }
+
+      // ═══════════════════════════════════
+      //  EXPORT / IMPORT
+      // ═══════════════════════════════════
+      function exportJSON() {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(nodes,null,2)],{type:'application/json'}));
+        a.download = 'mapa-registral.json'; a.click();
+      }
+      function importClick() { document.getElementById('import-file').click(); }
+      function importJSON(e) {
+        const file = e.target.files[0]; if(!file) return;
+        const r = new FileReader();
+        r.onload = ev => {
+          try {
+            const d = JSON.parse(ev.target.result);
+            const arr = Array.isArray(d) ? d : (d.nodes||[]);
+            if (arr.length) { nodes=arr; save(); render(); }
+          } catch(err) { alert('Archivo JSON no válido'); }
+          e.target.value='';
+        };
+        r.readAsText(file);
+      }
+      function clearAll() {
+        if (!confirm('¿Eliminar todos los nodos?')) return;
+        nodes=[]; openSet.clear(); detailOpenSet.clear(); save(); render();
+      }
+
+      // ═══════════════════════════════════
+      //  HELPERS
+      // ═══════════════════════════════════
+      function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;'); }
+
+      // ═══════════════════════════════════
+      //  INIT
+      // ═══════════════════════════════════
+      load(); render();
+    </script>
+  </body>
+</html>

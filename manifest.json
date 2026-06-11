@@ -1,0 +1,13 @@
+{
+  "name": "MAPA-REGISTRAL",
+  "short_name": "MAPA-REGISTRAL",
+  "start_url": "/MAPA-REGISTRAL/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "icono.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
