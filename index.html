@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-
     <meta charset="UTF-8">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icono.jpg" type="image/jpeg">
@@ -9,241 +8,370 @@
     <meta name="apple-mobile-web-app-title" content="MAPA-REGISTRAL">
     <link rel="apple-touch-icon" href="icono.jpg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
     <title>Mapa Registral</title>
     <style>
       :root {
-        --bg:       #0f1117;
-        --s1:       #181c27;
-        --s2:       #1e2336;
-        --s3:       #232840;
-        --s4:       #28304a;
-        --border:   #2c3248;
-        --border2:  #3d4560;
-        --text:     #e8eaf0;
-        --muted:    #7a82a0;
-        --accent:   #4f8ef7;
-        --c-mat:    #4f8ef7;
-        --c-vta:    #6a7ab8;
+        --bg:       #f4f6fb;
+        --s1:       #ffffff;
+        --s2:       #f0f3fa;
+        --s3:       #e8ecf5;
+        --s4:       #dde3f0;
+        --border:   #d0d8eb;
+        --border2:  #b8c3de;
+        --text:     #1a2038;
+        --muted:    #6370a0;
+        --accent:   #2d6ef0;
+        --c-mat:    #2d6ef0;
+        --c-vta:    #5264b0;
         --c-seg:    #c05621;
-        --c-her:    #b89020;
-        --c-don:    #2e7d5e;
-        --c-reu:    #1e6b7a;
-        --c-per:    #7c5cbf;
+        --c-her:    #9a7010;
+        --c-don:    #1e6b3e;
+        --c-reu:    #156070;
+        --c-per:    #6040b8;
         --font-mono:'JetBrains Mono','Fira Mono','Consolas',monospace;
         --font-ui:  'Inter','Segoe UI',system-ui,sans-serif;
       }
-      *{box-sizing:border-box;margin:0;padding:0;}
-      body{background:var(--bg);color:var(--text);font-family:var(--font-ui);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+      *{ box-sizing:border-box; margin:0; padding:0; }
+      body{ background:var(--bg); color:var(--text); font-family:var(--font-ui); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-      /* TOP BAR */
-      .topbar{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;}
-      .topbar-title{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);letter-spacing:.08em;white-space:nowrap;flex-shrink:0;}
-      .topbar-sep{width:1px;height:18px;background:var(--border2);}
-      .topbar-actions{display:flex;gap:.4rem;margin-left:auto;flex-wrap:wrap;}
-      .btn{font-family:var(--font-ui);font-size:.7rem;padding:.3rem .75rem;border-radius:5px;border:1px solid var(--border2);background:var(--s2);color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;white-space:nowrap;}
-      .btn:hover{border-color:var(--accent);background:#1e2640;}
-      .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
-      .btn-primary:hover{background:#3d7de8;}
-      .btn-danger{border-color:#c0392b;color:#e87070;}
-      .btn-danger:hover{background:rgba(192,57,43,.15);}
+      /* ── TOP BAR ── */
+      .topbar{
+        display:flex; align-items:center; gap:.6rem;
+        padding:.45rem .9rem;
+        background:var(--s1); border-bottom:1px solid var(--border);
+        flex-shrink:0; z-index:100;
+      }
+      .topbar-title{ font-family:var(--font-mono); font-size:.76rem; color:var(--accent); letter-spacing:.08em; white-space:nowrap; flex-shrink:0; }
+      .topbar-sep{ width:1px; height:16px; background:var(--border2); flex-shrink:0; }
+      #stats-label{ font-size:.62rem; color:var(--muted); font-family:var(--font-mono); white-space:nowrap; }
 
-      /* WORKSPACE */
-      .workspace{flex:1;display:flex;overflow:hidden;}
+      /* Toggle de vistas */
+      .view-toggle{
+        display:flex; border:1px solid var(--border2); border-radius:6px;
+        overflow:hidden; flex-shrink:0; margin-left:auto;
+      }
+      .vt-btn{
+        font-family:var(--font-mono); font-size:.64rem; padding:.28rem .75rem;
+        background:transparent; border:none; color:var(--muted);
+        cursor:pointer; transition:background .15s,color .15s;
+        display:flex; align-items:center; gap:.3rem; white-space:nowrap;
+      }
+      .vt-btn.active{ background:var(--accent); color:#fff; }
+      .vt-btn:not(.active):hover{ background:var(--s2); color:var(--text); }
 
-      /* PANEL FORMULARIO */
-      .panel{width:276px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-      .panel-head{padding:.8rem .9rem .65rem;border-bottom:1px solid var(--border);}
-      .panel-head h2{font-size:.67rem;font-family:var(--font-mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:.55rem;}
-      .field{margin-bottom:.6rem;}
-      .field label{display:block;font-size:.58rem;font-family:var(--font-mono);color:var(--muted);letter-spacing:.06em;margin-bottom:.22rem;text-transform:uppercase;}
-      .field input,.field textarea,.field select{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--font-mono);font-size:.72rem;padding:.38rem .55rem;outline:none;transition:border-color .15s;resize:none;}
-      .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);}
-      .field textarea{min-height:58px;line-height:1.5;}
-      .tipo-strip{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.6rem;}
-      .tipo-opt{font-size:.58rem;font-family:var(--font-mono);padding:.2rem .45rem;border-radius:20px;border:1px solid var(--border2);cursor:pointer;transition:all .15s;color:var(--muted);}
-      .tipo-opt:hover{color:var(--text);}
-      .tipo-opt.sel{color:#fff;font-weight:600;}
-      .tipo-opt[data-t="matricula"].sel  {background:var(--c-mat);border-color:var(--c-mat);}
-      .tipo-opt[data-t="compraventa"].sel{background:var(--c-vta);border-color:var(--c-vta);}
-      .tipo-opt[data-t="segregacion"].sel{background:var(--c-seg);border-color:var(--c-seg);}
-      .tipo-opt[data-t="herencia"].sel   {background:var(--c-her);border-color:var(--c-her);}
-      .tipo-opt[data-t="donacion"].sel   {background:var(--c-don);border-color:var(--c-don);}
-      .tipo-opt[data-t="reunion"].sel    {background:var(--c-reu);border-color:var(--c-reu);}
-      .tipo-opt[data-t="persona"].sel    {background:var(--c-per);border-color:var(--c-per);}
+      /* Botones globales topbar */
+      .topbar-actions{ display:flex; gap:.3rem; flex-shrink:0; }
+      .btn{ font-family:var(--font-ui); font-size:.67rem; padding:.27rem .65rem; border-radius:5px; border:1px solid var(--border2); background:var(--s2); color:var(--text); cursor:pointer; transition:border-color .15s,background .15s; white-space:nowrap; }
+      .btn:hover{ border-color:var(--accent); background:var(--s3); }
+      .btn-primary{ background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+      .btn-primary:hover{ background:#1a55d0; border-color:#1a55d0; }
+      .btn-danger{ border-color:#c0392b; color:#c0392b; }
+      .btn-danger:hover{ background:rgba(192,57,43,.1); }
+      .btn-icon{ padding:.27rem .48rem; font-size:.72rem; }
+
+      /* ── VISTAS ── */
+      .view{ display:none; flex:1; overflow:hidden; }
+      .view.active{ display:flex; }
+
+      /* ══════════════════════════════
+      VISTA 1 — CONTROLES
+      ══════════════════════════════ */
+      .v1{ flex-direction:row; }
+
+      /* Panel form izquierdo */
+      .v1-form{
+        width:300px; flex-shrink:0;
+        background:var(--s1); border-right:1px solid var(--border);
+        display:flex; flex-direction:column; overflow:hidden;
+      }
+      .v1-form-scroll{ flex:1; overflow-y:auto; padding:.9rem 1rem 1.5rem; }
+
+      .section-title{
+        font-family:var(--font-mono); font-size:.6rem; letter-spacing:.1em;
+        text-transform:uppercase; color:var(--muted); margin-bottom:.7rem;
+        display:flex; align-items:center; gap:.5rem;
+      }
+      .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
+
+      .field{ margin-bottom:.6rem; }
+      .field label{ display:block; font-size:.57rem; font-family:var(--font-mono); color:var(--muted); letter-spacing:.06em; margin-bottom:.2rem; text-transform:uppercase; }
+      .field input,.field textarea,.field select{
+        width:100%; background:var(--s2); border:1px solid var(--border2);
+        border-radius:5px; color:var(--text); font-family:var(--font-mono);
+        font-size:.73rem; padding:.38rem .55rem; outline:none;
+        transition:border-color .15s; resize:vertical;
+      }
+      .field input:focus,.field textarea:focus,.field select:focus{ border-color:var(--accent); }
+      .field textarea{ min-height:140px; line-height:1.55; }
+
+      .tipo-strip{ display:flex; flex-wrap:wrap; gap:.25rem; margin-bottom:.6rem; }
+      .tipo-opt{ font-size:.58rem; font-family:var(--font-mono); padding:.2rem .44rem; border-radius:20px; border:1px solid var(--border2); cursor:pointer; transition:all .15s; color:var(--muted); }
+      .tipo-opt:hover{ color:var(--text); border-color:var(--border2); }
+      .tipo-opt.sel{ color:#fff; font-weight:600; }
+      .tipo-opt[data-t="matricula"].sel  { background:var(--c-mat); border-color:var(--c-mat); }
+      .tipo-opt[data-t="compraventa"].sel{ background:var(--c-vta); border-color:var(--c-vta); }
+      .tipo-opt[data-t="segregacion"].sel{ background:var(--c-seg); border-color:var(--c-seg); }
+      .tipo-opt[data-t="herencia"].sel   { background:var(--c-her); border-color:var(--c-her); }
+      .tipo-opt[data-t="donacion"].sel   { background:var(--c-don); border-color:var(--c-don); }
+      .tipo-opt[data-t="reunion"].sel    { background:var(--c-reu); border-color:var(--c-reu); }
+      .tipo-opt[data-t="persona"].sel    { background:var(--c-per); border-color:var(--c-per); }
+
+      /* hint de hashtag */
+      .hash-hint{
+        font-size:.57rem; font-family:var(--font-mono); color:var(--muted);
+        background:var(--s2); border:1px solid var(--border); border-radius:4px;
+        padding:.3rem .5rem; margin-top:.3rem; line-height:1.5;
+      }
+      .hash-hint code{ color:var(--accent); }
 
       /* autocomplete */
-      .ac-wrap{position:relative;}
-      .ac-list{position:absolute;top:100%;left:0;right:0;z-index:500;background:var(--s2);border:1px solid var(--border2);border-top:none;border-radius:0 0 5px 5px;max-height:120px;overflow-y:auto;display:none;}
-      .ac-list.open{display:block;}
-      .ac-item{padding:.32rem .55rem;font-size:.68rem;font-family:var(--font-mono);cursor:pointer;display:flex;gap:.45rem;align-items:center;}
-      .ac-item:hover{background:var(--border);}
-      .ac-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+      .ac-wrap{ position:relative; }
+      .ac-list{ position:absolute; top:100%; left:0; right:0; z-index:600; background:var(--s1); border:1px solid var(--border2); border-top:none; border-radius:0 0 5px 5px; max-height:130px; overflow-y:auto; display:none; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+      .ac-list.open{ display:block; }
+      .ac-item{ padding:.32rem .55rem; font-size:.68rem; font-family:var(--font-mono); cursor:pointer; display:flex; gap:.42rem; align-items:center; }
+      .ac-item:hover{ background:var(--s2); }
+      .ac-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 
-      /* ÁRBOL — contenedor scrollable */
-      .tree-wrap{flex:1;overflow-y:auto;overflow-x:hidden;padding:.5rem .5rem .5rem .3rem;}
+      /* Acciones de mapa */
+      .map-actions{ display:grid; grid-template-columns:1fr 1fr; gap:.45rem; margin-top:.5rem; }
+      .map-actions .btn{ text-align:center; justify-content:center; }
 
-      /* ── TARJETAS ANIDADAS ── */
-      .tree-root{display:flex;flex-direction:column;gap:1.2rem;padding:.2rem;}
-
-      /* Cada nodo es una tarjeta */
-      .card{
-        border-radius:8px;
-        border:1.5px solid var(--border2);
+      /* Mini árbol */
+      .v1-tree{
+        flex:1; overflow:hidden;
+        background:var(--bg); border-left:1px solid var(--border);
+        display:flex; flex-direction:column;
+      }
+      .v1-tree-head{
+        padding:.5rem .8rem; border-bottom:1px solid var(--border);
+        font-family:var(--font-mono); font-size:.6rem; color:var(--muted);
+        letter-spacing:.08em; text-transform:uppercase; flex-shrink:0;
         background:var(--s1);
-        overflow:hidden;
-        transition:border-color .15s,box-shadow .15s;
       }
-      .card:hover{border-color:var(--border2);}
-      .card.depth-0{background:var(--s1);}
-      .card.depth-1{background:var(--s2);}
-      .card.depth-2{background:var(--s3);}
-      .card.depth-3{background:var(--s4);}
-      /* profundidad > 3 reutiliza s4 */
+      .v1-tree-scroll{ flex:1; overflow-y:auto; padding:.4rem .4rem .4rem .3rem; }
 
-      /* Cabecera de la tarjeta */
+      .tree-root-mini{ padding:.15rem; }
+
+      /* ══════════════════════════════
+      VISTA 2 — ITEMS
+      ══════════════════════════════ */
+      .v2{ flex-direction:column; overflow-y:auto; padding:1.1rem 1.2rem 2.5rem; }
+
+      /* ── TARJETAS ── */
+      .tree-root{ display:flex; flex-direction:column; gap:1rem; }
+
+      .card{
+        border-radius:8px; border:1.5px solid var(--border2);
+        background:var(--s1); overflow:hidden; transition:border-color .15s, box-shadow .15s;
+      }
+      .card.depth-0{ background:var(--s1); }
+      .card.depth-1{ background:var(--s2); }
+      .card.depth-2{ background:var(--s3); }
+      .card.depth-3{ background:var(--s4); }
+
+      .card.depth-1{ margin-left:0; }
+      .card.depth-2{ margin-left:0; }
+      .card.depth-3{ margin-left:0; }
+
+
+      /* borde izq por tipo */
+      .card[data-tipo="matricula"]  { border-left:3px solid var(--c-mat); }
+      .card[data-tipo="compraventa"]{ border-left:3px solid var(--c-vta); }
+      .card[data-tipo="segregacion"]{ border-left:3px solid var(--c-seg); }
+      .card[data-tipo="herencia"]   { border-left:3px solid var(--c-her); }
+      .card[data-tipo="donacion"]   { border-left:3px solid var(--c-don); }
+      .card[data-tipo="reunion"]    { border-left:3px solid var(--c-reu); }
+      .card[data-tipo="persona"]    { border-left:3px solid var(--c-per); }
+
+      /* HEAD */
       .card-head{
-        display:flex;align-items:flex-start;gap:.5rem;
-        padding:.6rem .7rem .5rem;
-        cursor:pointer;
-        user-select:none;
-        position:relative;
+        display:flex; flex-wrap:wrap; align-items:flex-start; gap:.35rem;
+        padding:.5rem .45rem .45rem; cursor:pointer; user-select:text;
       }
-      .card-head:hover .card-actions{opacity:1;}
 
-      /* Indicador de orden (fecha) a la izquierda */
+
       .card-order{
-        font-family:var(--font-mono);
-        font-size:.58rem;
-        color:var(--muted);
-        background:var(--border);
-        border-radius:4px;
-        padding:.18rem .42rem;
-        white-space:nowrap;
-        flex-shrink:0;
-        margin-top:.1rem;
-        letter-spacing:.03em;
+        font-family:var(--font-mono); font-size:.56rem; color:var(--muted);
+        background:var(--s3); border:1px solid var(--border); border-radius:4px;
+        padding:.14rem .38rem; white-space:nowrap; flex-shrink:0; margin-top:.1rem; font-size:.54rem;
       }
-
-      /* Tipo badge */
       .card-tipo{
-        font-size:.54rem;font-family:var(--font-mono);letter-spacing:.07em;
-        text-transform:uppercase;padding:.12rem .38rem;border-radius:20px;
-        color:#fff;flex-shrink:0;margin-top:.1rem;white-space:nowrap;
+        font-size:.52rem; font-family:var(--font-mono); letter-spacing:.07em;
+        text-transform:uppercase; padding:.1rem .34rem; border-radius:20px;
+        color:#fff; flex-shrink:0; margin-top:.1rem; white-space:nowrap;
+      }
+      .card-body{ width:100%; }
+
+      .card-label{
+        font-family:var(--font-mono); font-size:.75rem; font-weight:700;
+        line-height:1.3; word-break:break-word; user-select:text;
       }
 
-      /* Contenido principal */
-      .card-body{flex:1;min-width:0;}
-      .card-label{
-        font-family:var(--font-mono);font-size:.76rem;font-weight:700;
-        line-height:1.3;word-break:break-word;
-      }
+      /* Detalle con hashtags renderizados */
       .card-detail{
-        font-size:.63rem;color:var(--muted);line-height:1.55;
-        white-space:pre-wrap;word-break:break-word;
-        margin-top:.22rem;
-        max-height:2.9em;overflow:hidden;
+        font-size:.63rem; color:var(--muted); line-height:1.6;
+        word-break:break-word; margin-top:.2rem;
+        max-height:2.8em; overflow:hidden;
         mask-image:linear-gradient(to bottom,black 40%,transparent 100%);
         -webkit-mask-image:linear-gradient(to bottom,black 40%,transparent 100%);
-        transition:max-height .2s ease;
       }
-      .card-detail.expanded{max-height:600px;mask-image:none;-webkit-mask-image:none;}
+      .card-detail.expanded{ max-height:none; mask-image:none; -webkit-mask-image:none; }
+      /* Hashtag link */
+      .hash-link{
+        display:inline-flex; align-items:center; gap:.15rem;
+        font-family:var(--font-mono); font-size:.6rem; font-weight:600;
+        color:var(--accent); background:rgba(45,110,240,.09);
+        border:1px solid rgba(45,110,240,.22); border-radius:4px;
+        padding:.05rem .3rem; cursor:pointer; white-space:nowrap;
+        transition:background .12s, border-color .12s;
+        text-decoration:none;
+      }
+      .hash-link:hover{ background:rgba(45,110,240,.18); border-color:var(--accent); }
+      .hash-link.found{ color:var(--accent); }
+      .hash-link.notfound{ color:var(--muted); border-color:var(--border); background:var(--s2); cursor:default; }
+
       .card-detail-toggle{
-        font-size:.56rem;font-family:var(--font-mono);color:var(--accent);
-        cursor:pointer;margin-top:.15rem;display:inline-block;
+        font-size:.55rem; font-family:var(--font-mono); color:var(--accent);
+        cursor:pointer; margin-top:.18rem; display:inline-block;
       }
 
-      /* Chevron expansión hijos */
+      /* Chevron + contador */
       .card-chevron{
-        font-size:.7rem;color:var(--muted);flex-shrink:0;
-        margin-top:.12rem;transition:transform .2s;
-        width:14px;text-align:center;
+        font-size:.62rem; color:var(--muted); flex-shrink:0; margin-top:.14rem;
+        transition:transform .2s; width:12px; text-align:center;
       }
-      .card.open > .card-head .card-chevron{transform:rotate(90deg);}
+      .card.open > .card-head .card-chevron{ transform:rotate(90deg); }
+      .card-count{
+        font-size:.52rem; font-family:var(--font-mono);
+        background:var(--s3); border:1px solid var(--border); color:var(--muted);
+        border-radius:20px; padding:.07rem .33rem; margin-left:.22rem;
+      }
 
-      /* Acciones hover */
-      .card-actions{
-        display:flex;gap:.2rem;opacity:0;transition:opacity .15s;
-        position:absolute;top:.4rem;right:.4rem;
+      /* FOOTER con botones editar / eliminar */
+      .card-footer{
+        display:flex; justify-content:flex-end; gap:.35rem;
+        padding:.3rem .6rem .4rem;
+        border-top:1px solid var(--border);
       }
       .card-btn{
-        width:18px;height:18px;border-radius:4px;border:none;
-        background:var(--s2);color:var(--muted);font-size:.58rem;
-        cursor:pointer;display:flex;align-items:center;justify-content:center;
-        transition:background .12s,color .12s;
+        font-size:.61rem; font-family:var(--font-mono);
+        padding:.2rem .55rem; border-radius:4px; border:1px solid var(--border2);
+        background:var(--s2); color:var(--muted); cursor:pointer;
+        display:flex; align-items:center; gap:.28rem;
+        transition:background .12s,color .12s,border-color .12s;
       }
-      .card-btn:hover{background:var(--border2);color:var(--text);}
-      .card-btn.del:hover{background:rgba(192,57,43,.3);color:#e87070;}
+      .card-btn:hover{ background:var(--s3); color:var(--text); }
+      .card-btn.del:hover{ background:rgba(192,57,43,.1); color:#c0392b; border-color:#c0392b; }
 
       /* Hijos anidados */
       .card-children{
-        display:none;
-        flex-direction:column;gap:.7rem;
-        padding:.2rem .7rem .7rem .9rem;
+        display:none; flex-direction:column; gap:.6rem;
+        padding:.28rem .35rem .5rem .45rem;
         border-top:1px solid var(--border);
       }
-      .card.open > .card-children{display:flex;}
-
-      /* Contador de hijos */
-      .card-count{
-        font-size:.55rem;font-family:var(--font-mono);
-        background:var(--border2);color:var(--muted);
-        border-radius:20px;padding:.1rem .38rem;
-        margin-left:.3rem;flex-shrink:0;margin-top:.15rem;
-      }
-
-      /* Borde izquierdo según tipo */
-      .card[data-tipo="segregacion"] > .card-head{border-left:3px solid var(--c-seg);padding-left:.55rem;}
-      .card[data-tipo="herencia"]    > .card-head{border-left:3px solid var(--c-her);padding-left:.55rem;}
-      .card[data-tipo="donacion"]    > .card-head{border-left:3px solid var(--c-don);padding-left:.55rem;}
-      .card[data-tipo="reunion"]     > .card-head{border-left:3px solid var(--c-reu);padding-left:.55rem;}
-      .card[data-tipo="compraventa"] > .card-head{border-left:3px solid var(--c-vta);padding-left:.55rem;}
-      .card[data-tipo="matricula"]   > .card-head{border-left:3px solid var(--c-mat);padding-left:.55rem;}
-      .card[data-tipo="persona"]     > .card-head{border-left:3px solid var(--c-per);padding-left:.55rem;}
+      .card.open > .card-children{ display:flex; }
 
       /* Estado vacío */
       .empty-state{
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        height:100%;gap:.6rem;opacity:.3;pointer-events:none;
+        display:flex; flex-direction:column; align-items:center;
+        justify-content:center; padding:3rem 1rem; gap:.6rem;
+        opacity:.28; pointer-events:none; flex:1;
       }
-      .empty-state .icon{font-size:2.4rem;}
-      .empty-state p{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);text-align:center;}
+      .empty-state .icon{ font-size:2.2rem; }
+      .empty-state p{ font-family:var(--font-mono); font-size:.68rem; color:var(--muted); text-align:center; line-height:1.6; }
 
-      /* MODAL */
-      .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:300;align-items:center;justify-content:center;display:none;}
-      .modal-overlay.open{display:flex;}
-      .modal{background:var(--s1);border:1px solid var(--border2);border-radius:10px;padding:1.1rem 1.2rem;width:340px;max-width:95vw;}
-      .modal h3{font-size:.78rem;font-family:var(--font-mono);color:var(--accent);margin-bottom:.85rem;}
-      .modal-btns{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.85rem;}
+      /* ── MODAL ── */
+      .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; align-items:center; justify-content:center; display:none; }
+      .modal-overlay.open{ display:flex; }
+      .modal{ background:var(--s1); border:1px solid var(--border2); border-radius:10px; padding:1.15rem 1.25rem; width:370px; max-width:96vw; max-height:92vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.12); }
+      .modal h3{ font-size:.78rem; font-family:var(--font-mono); color:var(--accent); margin-bottom:.85rem; }
+      .modal-btns{ display:flex; gap:.5rem; justify-content:flex-end; margin-top:.85rem; }
+      .modal .field textarea{ min-height:100px; }
 
-      ::-webkit-scrollbar{width:4px;}
-      ::-webkit-scrollbar-track{background:transparent;}
-      ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+      /* Highlight animado al navegar a una tarjeta */
+      @keyframes cardHighlight {
+        0%  { box-shadow:0 0 0 0 rgba(45,110,240,.5); border-color:var(--accent); }
+        60% { box-shadow:0 0 0 6px rgba(45,110,240,.12); }
+        100%{ box-shadow:none; border-color:var(--border2); }
+      }
+      .card.highlighted{ animation:cardHighlight 1.6s ease-out; }
+
+
+      .fab-expand{
+        font-size:.85rem; padding:.28rem .52rem; border-radius:6px;
+        border:1px solid var(--border2); background:var(--s2);
+        color:var(--text); cursor:pointer; flex-shrink:0;
+        transition:background .15s,border-color .15s;
+      }
+      .fab-expand:hover{ border-color:var(--accent); background:var(--s3); }
+
+
+      ::-webkit-scrollbar{ width:4px; }
+      ::-webkit-scrollbar-track{ background:transparent; }
+      ::-webkit-scrollbar-thumb{ background:var(--border2); border-radius:3px; }
+      ::-webkit-scrollbar-thumb:hover{ background:var(--muted); }
+
+      /* ── MENÚ FLOTANTE ── */
+      .fab-bar{
+        position:fixed; bottom:0; left:0; right:0; z-index:200;
+        display:flex; align-items:center; gap:.5rem;
+        padding:.55rem .9rem .65rem;
+        background:var(--s1); border-top:1px solid var(--border);
+        box-shadow:0 -2px 12px rgba(0,0,0,.07);
+      }
+      .fab-search{
+        flex:1; background:var(--s2); border:1px solid var(--border2);
+        border-radius:6px; color:var(--text); font-family:var(--font-mono);
+        font-size:.72rem; padding:.38rem .6rem; outline:none;
+        transition:border-color .15s;
+      }
+      .fab-search:focus{ border-color:var(--accent); }
+
+      .fab-filter{
+        font-family:var(--font-mono); font-size:.62rem;
+        padding:.38rem .3rem; border-radius:6px;
+        border:1px solid var(--border2); background:var(--s2);
+        color:var(--text); cursor:pointer; outline:none;
+        transition:border-color .15s,background .15s; white-space:nowrap;
+        max-width:90px;
+      }
+
+      .fab-filter:focus{ border-color:var(--accent); }
+      .fab-toggle{
+        font-family:var(--font-mono); font-size:.65rem;
+        padding:.38rem .75rem; border-radius:6px;
+        border:1px solid var(--accent); background:var(--accent);
+        color:#fff; cursor:pointer; white-space:nowrap; flex-shrink:0;
+        transition:background .15s;
+      }
+      .fab-toggle:hover{ background:#1a55d0; }
+
+      /* Espacio para que el contenido no quede bajo el fab */
+      .v2{ padding-bottom:4rem !important; }
+      .v1-form-scroll{ padding-bottom:4rem !important; }
+
+
     </style>
   </head>
   <body>
 
+    <!-- ── TOP BAR ── -->
     <div class="topbar">
       <span class="topbar-title">◈ MAPA REGISTRAL</span>
       <div class="topbar-sep"></div>
-      <span id="stats-label" style="font-size:.64rem;color:var(--muted);font-family:var(--font-mono)">0 nodos</span>
-      <div class="topbar-actions">
-        <button class="btn" onclick="expandAll()">⊞ Expandir todo</button>
-        <button class="btn" onclick="collapseAll()">⊟ Colapsar todo</button>
-        <button class="btn" onclick="exportJSON()">↓ Exportar</button>
-        <button class="btn" onclick="importClick()">↑ Importar</button>
-        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
-        <button class="btn btn-danger" onclick="clearAll()">✕ Limpiar</button>
-      </div>
+      <span id="stats-label">0 nodos</span>
     </div>
 
-    <div class="workspace">
+    <!-- ══════════════════════════
+     VISTA 1 — CONTROLES
+══════════════════════════ -->
+    <div class="view v1 active" id="view-1">
 
-      <!-- PANEL FORM -->
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Nuevo nodo</h2>
+      <!-- Form izquierdo -->
+      <div class="v1-form">
+        <div class="v1-form-scroll">
+          <div class="section-title">Nuevo nodo</div>
+
           <div class="field">
             <label>Tipo</label>
             <div class="tipo-strip">
@@ -256,50 +384,76 @@
               <span class="tipo-opt" data-t="persona">Persona</span>
             </div>
           </div>
+
           <div class="field">
             <label>Identificador</label>
-            <input id="inp-id" type="text" placeholder="Matrícula, año, Venta…">
+            <input id="inp-id" type="text">
           </div>
+
           <div class="field">
             <label>Fecha / Orden</label>
-            <input id="inp-fecha" type="text" placeholder="año dd/mm/año">
+            <input id="inp-fecha" type="text">
           </div>
+
           <div class="field">
             <label>Nodo padre (opcional)</label>
             <div class="ac-wrap">
-              <input id="inp-padre" type="text" placeholder="Buscar…" autocomplete="off"
-                     oninput="onAC('inp-padre','ac-main')" onfocus="onAC('inp-padre','ac-main')">
+              <input id="inp-padre" type="text" placeholder="Buscar nodo padre…"
+                     autocomplete="off"
+                     oninput="onAC('inp-padre','ac-main')"
+                     onfocus="onAC('inp-padre','ac-main')">
               <div class="ac-list" id="ac-main"></div>
             </div>
           </div>
+
           <div class="field">
             <label>Detalle / Observaciones</label>
-            <textarea id="inp-detail" placeholder="Precio, área, partes, notas…"></textarea>
+            <textarea id="inp-detail" placeholder="Precio, área, partes, notas…&#10;Usa #Matricula o #DUI para vincular nodos"></textarea>
+            <div class="hash-hint">
+              Usa <code>#matrícula</code> o <code>#DUI</code> en el detalle para crear vínculos de navegación entre nodos.
+            </div>
           </div>
-          <button class="btn btn-primary" style="width:100%" onclick="addNode()">＋ Agregar nodo</button>
-        </div>
-        <!-- árbol en el panel inferior -->
-        <div class="tree-wrap" id="tree-wrap">
-          <div class="empty-state" id="empty-state">
-            <div class="icon">⬡</div>
-            <p>Agrega un nodo<br>para comenzar</p>
+
+          <button class="btn btn-primary" style="width:100%;margin-bottom:1.1rem" onclick="addNode()">＋ Agregar nodo</button>
+
+          <div class="section-title">Acciones del mapa</div>
+          <div class="map-actions">
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+
+            <button class="btn" onclick="exportJSON()">↓ Exportar JSON</button>
+            <button class="btn" onclick="importClick()">↑ Importar JSON</button>
+            <button class="btn" onclick="exportPDF()" title="Descargar PDF">⬇PDF</button>   
+            <button class="btn" onclick="clearAll()">✕ Limpiar mapa</button>
           </div>
-          <div class="tree-root" id="tree-root"></div>
         </div>
       </div>
 
-      <!-- ÁREA PRINCIPAL: árbol expandido -->
-      <div style="flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);padding:1.4rem 1.6rem;" id="main-area">
-        <div class="empty-state" id="main-empty" style="height:100%;">
-          <div class="icon">⬡</div>
-          <p>Agrega nodos desde el panel<br>para construir el mapa</p>
+      <!-- Mini árbol derecho en vista controles -->
+      <div class="v1-tree">
+        <div class="v1-tree-head">Índice de nodos</div>
+        <div class="v1-tree-scroll">
+          <div class="empty-state" id="mini-empty" style="padding:2rem 1rem;">
+            <div class="icon">⬡</div>
+            <p>El árbol aparecerá<br>aquí al agregar nodos</p>
+          </div>
+          <div class="tree-root-mini" id="tree-root-mini"></div>
         </div>
-        <div id="main-tree" style="display:flex;flex-direction:column;gap:1.4rem;"></div>
       </div>
 
     </div>
 
-    <!-- MODAL EDITAR -->
+    <!-- ══════════════════════════
+     VISTA 2 — ITEMS
+══════════════════════════ -->
+    <div class="view v2" id="view-2">
+      <div class="empty-state" id="main-empty">
+        <div class="icon">⬡</div>
+        <p>Agrega nodos desde ⚙ Controles<br>para construir el mapa registral</p>
+      </div>
+      <div class="tree-root" id="main-tree"></div>
+    </div>
+
+    <!-- ── MODAL EDITAR ── -->
     <div class="modal-overlay" id="modal">
       <div class="modal">
         <h3>✎ Editar nodo</h3>
@@ -320,12 +474,17 @@
         <div class="field">
           <label>Padre</label>
           <div class="ac-wrap">
-            <input id="m-padre" type="text" placeholder="Sin padre…" autocomplete="off"
-                   oninput="onAC('m-padre','ac-modal')" onfocus="onAC('m-padre','ac-modal')">
+            <input id="m-padre" type="text" placeholder="Sin padre…"
+                   autocomplete="off"
+                   oninput="onAC('m-padre','ac-modal')"
+                   onfocus="onAC('m-padre','ac-modal')">
             <div class="ac-list" id="ac-modal"></div>
           </div>
         </div>
-        <div class="field"><label>Detalle</label><textarea id="m-detail"></textarea></div>
+        <div class="field">
+          <label>Detalle</label>
+          <textarea id="m-detail" placeholder="Usa #matrícula o #DUI para vincular"></textarea>
+        </div>
         <div class="modal-btns">
           <button class="btn" onclick="closeModal()">Cancelar</button>
           <button class="btn btn-primary" onclick="saveEdit()">Guardar</button>
@@ -333,25 +492,212 @@
       </div>
     </div>
 
+    <!-- ── MENÚ FLOTANTE ── -->
+    <div class="fab-bar">
+      <input class="fab-search" id="fab-q" type="text" placeholder="🔍 Buscar nodo…"
+             onkeydown="onFabSearch(event)">
+      <select class="fab-filter" id="fab-filter" onchange="applyFilter()">
+        <option value="todos">Todos</option>
+        <option value="inmueble">Inmuebles</option>
+        <option value="persona">Personas</option>
+      </select>
+      <button class="fab-expand" id="fab-exp" onclick="fabExpand()" title="Expandir todo">⊞</button>
+      <button class="fab-toggle" id="fab-btn" onclick="fabToggle()">📋 Items</button>
+    </div>
+
+
     <script>
       // ═══════════════════════════════════
-      //  ESTADO & PERSISTENCIA
+      //  CONSTANTES & ESTADO
       // ═══════════════════════════════════
-      const LS_KEY = 'mapa-registral-v3';
+      const LS_KEY = 'mapa-registral-v4';
       const TYPE_COLOR = {
-        matricula:'#4f8ef7', compraventa:'#6a7ab8', persona:'#7c5cbf',
-        segregacion:'#c05621', herencia:'#b89020', donacion:'#2e7d5e', reunion:'#1e6b7a',
+        matricula:'#2d6ef0', compraventa:'#5264b0', persona:'#6040b8',
+        segregacion:'#c05621', herencia:'#9a7010', donacion:'#1e6b3e', reunion:'#156070',
       };
 
-      let nodes        = [];   // { id, tipo, label, fecha, padreId, detail }
-      let openSet      = new Set();   // ids con hijos expandidos
-      let detailOpenSet= new Set();   // ids con detalle expandido
-      let selectedTipo = 'matricula';
-      let editingId    = null;
-      let _acPadreId   = null;
-      let _acMPadreId  = null;
+      let nodes         = [];
+      let openSet       = new Set();
+      let detailOpenSet = new Set();
+      let selectedTipo  = 'matricula';
+      let editingId     = null;
+      let _acPadreId    = null;
+      let _acMPadreId   = null;
 
-      function save() { localStorage.setItem(LS_KEY, JSON.stringify({ nodes: nodes, open: Array.from(openSet) })); }
+      // ═══════════════════════════════════
+      //  EXPORT PDF
+      // ═══════════════════════════════════
+      function exportPDF() {
+        const tipo  = document.getElementById('fab-filter').value;
+        const TIPOS_INMUEBLE = ['matricula','compraventa','segregacion','herencia','donacion','reunion'];
+
+        const childMap = {};
+        nodes.forEach(n => { childMap[n.id] = []; });
+        nodes.forEach(n => { if (n.padreId && childMap[n.padreId]) childMap[n.padreId].push(n); });
+        const roots = sortByFecha(nodes.filter(n => !n.padreId || !nodes.some(x => x.id === n.padreId)));
+
+        function nodeVisible(n) {
+          return tipo === 'todos' ? true
+            : tipo === 'persona' ? n.tipo === 'persona'
+            : n.tipo !== 'persona';
+        }
+        function hasVisible(n) {
+          if (nodeVisible(n)) return true;
+          return (childMap[n.id] || []).some(k => hasVisible(k));
+        }
+
+        // Construir HTML del PDF
+        function nodeHTML(n, depth) {
+          if (!hasVisible(n)) return '';
+          const kids = sortByFecha(childMap[n.id] || []);
+          const indent = depth * 18;
+          const detailText = (n.detail || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          const detailLines = detailText.split('\n').map(line => {
+            // Colorear etiquetas igual que en la app
+            const LINE_TAGS_PDF = [
+              { re:/^(vendedor[a]?:?)/i, color:'#c0392b' },
+              { re:/^(tradente:?)/i,      color:'#c0392b' },
+              { re:/^(comprador[a]?:?)/i, color:'#1e6b3e' },
+              { re:/^(adquirente:?)/i,    color:'#1e6b3e' },
+              { re:/^(donante:?)/i,       color:'#c05621' },
+              { re:/^(donatari[oa]:?)/i,  color:'#1e6b3e' },
+              { re:/^(precio[^:]*:?)/i,   color:'#156070' },
+              { re:/^(monto[^:]*:?)/i,    color:'#156070' },
+              { re:/^(renta[^:]*:?)/i,    color:'#156070' },
+              { re:/^(escritura:?)/i,     color:'#9a7010' },
+              { re:/^(presentaci[oó]n:?)/i, color:'#9a7010' },
+              { re:/^(inscripci[oó]n[^:]*:?)/i, color:'#9a7010' },
+              { re:/^(apoderada?:?)/i,    color:'#6040b8' },
+              { re:/^(área[^:]*:?)/i,     color:'#2d6ef0' },
+              { re:/^(ubicaci[oó]n:?)/i,  color:'#2d6ef0' },
+              { re:/^(naturaleza:?)/i,    color:'#2d6ef0' },
+              { re:/^(titular[^:]*:?)/i,  color:'#2d6ef0' },
+            ];
+            // Reemplazar #hash con texto plano
+            let l = line.replace(/#[\w\d\-\.]+/g, m => `<span style="font-family:monospace;font-size:9px;background:#e8ecf5;border-radius:3px;padding:0 3px;">${m}</span>`);
+            for (const tag of LINE_TAGS_PDF) {
+              const m = line.match(tag.re);
+              if (m) {
+                l = `<span style="color:${tag.color};font-weight:600;">${m[0]}</span>` + l.slice(m[0].length);
+                break;
+              }
+            }
+            return `<div style="line-height:1.55;">${l}</div>`;
+          }).join('');
+
+          const kidsHTML = kids.map(k => nodeHTML(k, depth + 1)).join('');
+
+          if (!nodeVisible(n) && !kidsHTML) return '';
+
+          return `
+            <div style="margin-left:${indent}px; margin-bottom:10px; border:1px solid #ccc;
+                        border-left:3px solid #888; border-radius:6px; overflow:hidden;
+                        page-break-inside:avoid; background:#fff;">
+              <div style="padding:7px 10px 5px; border-bottom:${n.detail ? '1px solid #e8ecf5' : 'none'};">
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:4px;">
+                  <span style="font-size:9px;font-family:monospace;background:#e8ecf5;
+                               border-radius:3px;padding:2px 6px;color:#555;">${n.tipo.toUpperCase()}</span>
+                  <span style="font-size:9px;font-family:monospace;color:#888;
+                               background:#f0f3fa;border:1px solid #d0d8eb;border-radius:3px;
+                               padding:1px 5px;">${n.fecha || '—'}</span>
+                </div>
+                <div style="font-family:monospace;font-size:11px;font-weight:700;
+                            line-height:1.3;word-break:break-word;">${n.label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+              </div>
+              ${n.detail ? `<div style="padding:6px 10px 8px;font-size:9.5px;color:#444;
+                                        font-family:sans-serif;line-height:1.5;">${detailLines}</div>` : ''}
+              ${kidsHTML ? `<div style="padding:6px 8px 8px;border-top:1px solid #e8ecf5;
+                                        background:#f7f9fd;">${kidsHTML}</div>` : ''}
+            </div>`;
+        }
+
+        const titulo = tipo === 'persona' ? 'Personas' : tipo === 'inmueble' ? 'Inmuebles' : 'Mapa Registral';
+        const fecha  = new Date().toLocaleDateString('es-SV');
+        const body   = roots.filter(r => hasVisible(r)).map(r => nodeHTML(r, 0)).join('');
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+          <title>Mapa Registral</title>
+          <style>
+            @media print { body { margin: 0; } }
+            body { font-family: sans-serif; margin: 20px; background: #fff; }
+            h2 { font-size: 14px; margin-bottom: 4px; color: #1a2038; }
+            .sub { font-size: 10px; color: #888; margin-bottom: 16px; }
+          </style>
+        </head><body>
+          <h2>◈ MAPA REGISTRAL — ${titulo}</h2>
+          <div class="sub">Generado: ${fecha} · ${nodes.length} nodos totales</div>
+          ${body}
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 600);
+      }
+      
+      
+      
+      // ═══════════════════════════════════
+      //  PERSISTENCIA
+      // ═══════════════════════════════════
+
+      // ── BUSCADOR FAB ──
+      function onFabSearch(e) {
+        if (e.key !== 'Enter') return;
+        const q = document.getElementById('fab-q').value.trim().toLowerCase();
+        if (!q) { render(); switchView(2); return; }
+        switchView(2);
+        applyFilter(q);
+      }
+
+      // ── FILTRO FAB ──
+      function applyFilter(searchQ) {
+        const tipo  = document.getElementById('fab-filter').value;
+        const q     = searchQ !== undefined ? searchQ
+        : document.getElementById('fab-q').value.trim().toLowerCase();
+        const TIPOS_INMUEBLE = ['matricula','compraventa','segregacion','herencia','donacion','reunion'];
+        const mainTree  = document.getElementById('main-tree');
+        const mainEmpty = document.getElementById('main-empty');
+        mainTree.innerHTML = '';
+
+        const childMap = {};
+        nodes.forEach(n => { childMap[n.id] = []; });
+        nodes.forEach(n => { if (n.padreId && childMap[n.padreId]) childMap[n.padreId].push(n); });
+        const roots = sortByFecha(nodes.filter(n => !n.padreId || !nodes.some(x => x.id === n.padreId)));
+
+        // Filtrar recursivo — inmueble excluye persona
+
+        function matchNode(n) {
+          const tipoOk = tipo === 'todos'
+          || (tipo === 'persona' && n.tipo === 'persona')
+          || (tipo === 'inmueble' && n.tipo !== 'persona');
+
+          const textOk = !q
+          || n.label.toLowerCase().includes(q)
+          || (n.detail || '').toLowerCase().includes(q)
+          || (n.fecha || '').toLowerCase().includes(q);
+          return tipoOk && textOk;
+        }
+        function hasMatch(n) {
+          if (matchNode(n)) return true;
+          return (childMap[n.id] || []).some(k => hasMatch(k));
+        }
+
+        const filtered = roots.filter(r => hasMatch(r));
+        if (!filtered.length) {
+          mainEmpty.style.display = 'flex';
+          mainTree.style.display  = 'none';
+        } else {
+          mainEmpty.style.display = 'none';
+          mainTree.style.display  = 'flex';
+          filtered.forEach(r => mainTree.appendChild(buildCard(r, 0, childMap)));
+        }
+      }
+
+
+      function save() {
+        localStorage.setItem(LS_KEY, JSON.stringify({ nodes, open: Array.from(openSet) }));
+      }
       function load() {
         try {
           const r = localStorage.getItem(LS_KEY);
@@ -363,11 +709,26 @@
       }
 
       // ═══════════════════════════════════
+      //  SWITCH VISTAS
+      // ═══════════════════════════════════
+      let currentView = 1;
+      function switchView(n) {
+        currentView = n;
+        document.getElementById('view-1').classList.toggle('active', n === 1);
+        document.getElementById('view-2').classList.toggle('active', n === 2);
+        const btn = document.getElementById('fab-btn');
+        btn.textContent = n === 1 ? '📋 Items' : '⚙ Controles';
+      }
+      function fabToggle() {
+        switchView(currentView === 1 ? 2 : 1);
+      }
+
+      // ═══════════════════════════════════
       //  TIPO SELECTOR
       // ═══════════════════════════════════
       document.querySelectorAll('.tipo-opt').forEach(el => {
         el.addEventListener('click', () => {
-          document.querySelectorAll('.tipo-opt').forEach(x=>x.classList.remove('sel'));
+          document.querySelectorAll('.tipo-opt').forEach(x => x.classList.remove('sel'));
           el.classList.add('sel');
           selectedTipo = el.dataset.t;
         });
@@ -380,31 +741,33 @@
         const inp = document.getElementById(inputId);
         const lst = document.getElementById(listId);
         const q   = inp.value.trim().toLowerCase();
-        const exc = (listId === 'ac-modal') ? editingId : null;
-        const m   = nodes.filter(n => n.id!==exc && n.label.toLowerCase().includes(q)).slice(0,10);
+        const exc = listId === 'ac-modal' ? editingId : null;
+        const m   = nodes.filter(n => n.id !== exc && n.label.toLowerCase().includes(q)).slice(0, 12);
         if (!m.length) { lst.classList.remove('open'); return; }
         lst.innerHTML = m.map(n =>
-                              `<div class="ac-item" onclick="pickPadre('${esc(n.id)}','${esc(n.label)}','${listId}')">
+                              `<div class="ac-item" onclick="pickPadre('${safeId(n.id)}','${safeAttr(n.label)}','${listId}')">
        <span class="ac-dot" style="background:${TYPE_COLOR[n.tipo]||'#888'}"></span>
-       <span>${esc(n.label)}</span></div>`).join('');
+       <span>${escHtml(n.label)}</span>
+      </div>`
+                             ).join('');
         lst.classList.add('open');
       }
       document.addEventListener('click', e => {
         if (!e.target.closest('.ac-wrap'))
-          document.querySelectorAll('.ac-list').forEach(l=>l.classList.remove('open'));
+          document.querySelectorAll('.ac-list').forEach(l => l.classList.remove('open'));
       });
       function pickPadre(id, label, listId) {
         const lst = document.getElementById(listId);
         lst.previousElementSibling.value = label;
         lst.classList.remove('open');
-        if (listId==='ac-main')  _acPadreId  = id;
-        if (listId==='ac-modal') _acMPadreId = id;
+        if (listId === 'ac-main')  _acPadreId  = id;
+        if (listId === 'ac-modal') _acMPadreId = id;
       }
       function resolvePadre(inputId, cached) {
         if (cached) return cached;
         const v = document.getElementById(inputId).value.trim();
         if (!v) return null;
-        const f = nodes.find(n => n.label.toLowerCase()===v.toLowerCase());
+        const f = nodes.find(n => n.label.toLowerCase() === v.toLowerCase());
         return f ? f.id : null;
       }
 
@@ -423,59 +786,75 @@
           detail:  document.getElementById('inp-detail').value.trim(),
         };
         nodes.push(node);
-        // Auto-abrir el padre
         if (node.padreId) openSet.add(node.padreId);
         save(); render();
-        // Limpiar form
-        ['inp-id','inp-fecha','inp-padre','inp-detail'].forEach(id => document.getElementById(id).value='');
+        ['inp-id','inp-fecha','inp-padre','inp-detail'].forEach(id => document.getElementById(id).value = '');
         _acPadreId = null;
+        switchView(2);
       }
 
       function deleteNode(id) {
-        // reasignar hijos al abuelo
-        const n = nodes.find(x=>x.id===id); if (!n) return;
-        nodes.forEach(x=>{ if(x.padreId===id) x.padreId=n.padreId; });
-        nodes = nodes.filter(x=>x.id!==id);
+        const n = nodes.find(x => x.id === id); if (!n) return;
+        nodes.forEach(x => { if (x.padreId === id) x.padreId = n.padreId; });
+        nodes = nodes.filter(x => x.id !== id);
         openSet.delete(id); detailOpenSet.delete(id);
         save(); render();
       }
 
       // ═══════════════════════════════════
-      //  MODAL EDITAR
+      //  MODAL
       // ═══════════════════════════════════
       function openModal(id) {
-        const n = nodes.find(x=>x.id===id); if (!n) return;
+        const n = nodes.find(x => x.id === id); if (!n) return;
         editingId = id;
         document.getElementById('m-tipo').value   = n.tipo;
         document.getElementById('m-id').value     = n.label;
-        document.getElementById('m-fecha').value  = n.fecha||'';
-        document.getElementById('m-detail').value = n.detail||'';
+        document.getElementById('m-fecha').value  = n.fecha || '';
+        document.getElementById('m-detail').value = n.detail || '';
         _acMPadreId = n.padreId;
-        const padre = n.padreId ? nodes.find(x=>x.id===n.padreId) : null;
+        const padre = n.padreId ? nodes.find(x => x.id === n.padreId) : null;
         document.getElementById('m-padre').value  = padre ? padre.label : '';
         document.getElementById('modal').classList.add('open');
       }
       function closeModal() {
         document.getElementById('modal').classList.remove('open');
-        editingId=null; _acMPadreId=null;
+        editingId = null; _acMPadreId = null;
       }
       function saveEdit() {
-        const n=nodes.find(x=>x.id===editingId); if(!n) return;
+        const n = nodes.find(x => x.id === editingId); if (!n) return;
         const newPadreId = resolvePadre('m-padre', _acMPadreId);
-        // Si cambió el padre, abrir el nuevo padre
-        if (newPadreId && newPadreId!==n.padreId) openSet.add(newPadreId);
+        if (newPadreId && newPadreId !== n.padreId) openSet.add(newPadreId);
         n.tipo    = document.getElementById('m-tipo').value;
-        n.label   = document.getElementById('m-id').value.trim()||n.label;
+        n.label   = document.getElementById('m-id').value.trim() || n.label;
         n.fecha   = document.getElementById('m-fecha').value.trim();
         n.detail  = document.getElementById('m-detail').value.trim();
         n.padreId = newPadreId;
         save(); closeModal(); render();
       }
-      document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
+      document.getElementById('modal').addEventListener('click', e => {
+        if (e.target.id === 'modal') closeModal();
+      });
 
       // ═══════════════════════════════════
-      //  TOGGLE
+      //  TOGGLE EXPAND / DETAIL
       // ═══════════════════════════════════
+
+      let allExpanded = false;
+      function fabExpand() {
+        const btn = document.getElementById('fab-exp');
+        if (allExpanded) {
+          collapseAll();
+          allExpanded = false;
+          btn.textContent = '⊞';
+          btn.title = 'Expandir todo';
+        } else {
+          expandAll();
+          allExpanded = true;
+          btn.textContent = '⊟';
+          btn.title = 'Colapsar todo';
+        }
+      }
+
       function toggleOpen(id) {
         openSet.has(id) ? openSet.delete(id) : openSet.add(id);
         save(); render();
@@ -484,85 +863,191 @@
         detailOpenSet.has(id) ? detailOpenSet.delete(id) : detailOpenSet.add(id);
         render();
       }
-      function expandAll()   { nodes.forEach(n=>{ const kids=nodes.filter(x=>x.padreId===n.id); if(kids.length) openSet.add(n.id); }); save(); render(); }
+      function expandAll() {
+        nodes.forEach(n => { if (nodes.some(x => x.padreId === n.id)) openSet.add(n.id); });
+        save(); render();
+      }
       function collapseAll() { openSet.clear(); save(); render(); }
 
       // ═══════════════════════════════════
-      //  CONSTRUIR ÁRBOL DOM
+      //  HASHTAG → VÍNCULOS
+      //  Busca #TEXTO en el detalle y lo convierte en
+      //  un span/link que navega al nodo cuyo label
+      //  contiene ese texto (matrícula, DUI, etc.)
       // ═══════════════════════════════════
+      const LINE_TAGS = [
+        { re:/^(vendedor[a]?:?)/i,     color:'#c0392b', bg:'rgba(192,57,43,.08)'  },
+        { re:/^(tradente:?)/i,         color:'#c0392b', bg:'rgba(192,57,43,.08)'  },
+        { re:/^(comprador[a]?:?)/i,    color:'#1e6b3e', bg:'rgba(30,107,62,.08)'  },
+        { re:/^(adquirente:?)/i,       color:'#1e6b3e', bg:'rgba(30,107,62,.08)'  },
+        { re:/^(donante:?)/i,          color:'#c05621', bg:'rgba(192,86,33,.08)'  },
+        { re:/^(donatari[oa]:?)/i,     color:'#1e6b3e', bg:'rgba(30,107,62,.08)'  },
+        { re:/^(precio[^:]*:?)/i,      color:'#156070', bg:'rgba(21,96,112,.08)'  },
+        { re:/^(monto[^:]*:?)/i,       color:'#156070', bg:'rgba(21,96,112,.08)'  },
+        { re:/^(renta[^:]*:?)/i,       color:'#156070', bg:'rgba(21,96,112,.08)'  },
+        { re:/^(escritura:?)/i,        color:'#9a7010', bg:'rgba(154,112,16,.08)' },
+        { re:/^(presentaci[oó]n:?)/i,  color:'#9a7010', bg:'rgba(154,112,16,.08)' },
+        { re:/^(inscripci[oó]n[^:]*:?)/i, color:'#9a7010', bg:'rgba(154,112,16,.08)' },
+        { re:/^(apoderada?:?)/i,       color:'#6040b8', bg:'rgba(96,64,184,.08)'  },
+        { re:/^(constancia:?)/i,       color:'#6370a0', bg:'rgba(99,112,160,.08)' },
+        { re:/^(área[^:]*:?)/i,        color:'#2d6ef0', bg:'rgba(45,110,240,.08)' },
+        { re:/^(ubicaci[oó]n:?)/i,     color:'#2d6ef0', bg:'rgba(45,110,240,.08)' },
+        { re:/^(naturaleza:?)/i,       color:'#2d6ef0', bg:'rgba(45,110,240,.08)' },
+        { re:/^(titular[^:]*:?)/i,     color:'#2d6ef0', bg:'rgba(45,110,240,.08)' },
+      ];
 
-      // Ordena hijos por fecha (parseo simple: extrae primer número de 4 dígitos como año, luego compara string)
-      function sortByFecha(arr) {
-        return [...arr].sort((a,b)=>{
-          const ya = parseInt((a.fecha||'').match(/\d{4}/)?.[0]||'9999');
-          const yb = parseInt((b.fecha||'').match(/\d{4}/)?.[0]||'9999');
-          if (ya !== yb) return ya-yb;
-          return (a.fecha||'').localeCompare(b.fecha||'');
+      function renderDetail(text) {
+        const frag = document.createDocumentFragment();
+        const lines = text.split('\n');
+
+        lines.forEach((line, i) => {
+          // Procesar hashtags dentro de la línea
+          const lineFrag = document.createDocumentFragment();
+          const parts = line.split(/(#[\w\d\-\.]+)/g);
+
+          // Detectar si la línea tiene etiqueta de color
+          let lineColor = null, lineBg = null, matchLen = 0;
+          for (const tag of LINE_TAGS) {
+            const m = line.match(tag.re);
+            if (m) { lineColor = tag.color; lineBg = tag.bg; matchLen = m[0].length; break; }
+          }
+
+          // Wrapper de línea con color de fondo si aplica
+          const lineWrap = document.createElement('span');
+          lineWrap.style.cssText = `display:block; border-radius:3px; padding:0 2px; margin:1px 0;${lineBg ? `background:${lineBg};` : ''}`;
+
+          parts.forEach(part => {
+            if (part.startsWith('#')) {
+              const token = part.slice(1).toLowerCase();
+              const normalize = s => s.replace(/^0+/, '').replace(/-/g, '');
+              const tokenNorm = normalize(token);
+              let match = nodes.find(n => n.label.toLowerCase() === token && (n.tipo === 'matricula' || n.tipo === 'persona'));
+              if (!match) match = nodes.find(n => n.label.toLowerCase().includes(token) && (n.tipo === 'matricula' || n.tipo === 'persona'));
+              if (!match) match = nodes.find(n => n.tipo === 'persona' && normalize(n.detail || '').includes(tokenNorm));
+              if (!match) match = nodes.find(n => n.label.toLowerCase().includes(token));
+              const span = document.createElement('span');
+              span.className = 'hash-link ' + (match ? 'found' : 'notfound');
+              span.textContent = part;
+              if (match) {
+                span.title = match.label;
+                span.onclick = e => { e.stopPropagation(); navigateToNode(match.id); };
+              }
+              lineWrap.appendChild(span);
+            } else {
+              // Colorear la palabra clave al inicio de línea
+              if (lineColor && matchLen > 0 && part === parts[0]) {
+                const keyword = part.slice(0, matchLen);
+                const rest    = part.slice(matchLen);
+                const kw = document.createElement('span');
+                kw.style.cssText = `color:${lineColor};font-weight:600;`;
+                kw.textContent = keyword;
+                lineWrap.appendChild(kw);
+                if (rest) lineWrap.appendChild(document.createTextNode(rest));
+              } else {
+                lineWrap.appendChild(document.createTextNode(part));
+              }
+            }
+          });
+
+          frag.appendChild(lineWrap);
         });
+        return frag;
       }
 
+
+      // Navega al nodo en la vista Items y lo resalta
+      function navigateToNode(id) {
+        // Asegurar que el nodo y sus ancestros estén abiertos
+        let n = nodes.find(x => x.id === id);
+        while (n && n.padreId) {
+          openSet.add(n.padreId);
+          n = nodes.find(x => x.id === n.padreId);
+        }
+        save(); render();
+        switchView(2);
+        setTimeout(() => {
+          const el = document.querySelector(`.card[data-id="${id}"]`);
+          if (!el) return;
+          el.scrollIntoView({ behavior:'smooth', block:'center' });
+          el.classList.add('highlighted');
+          setTimeout(() => el.classList.remove('highlighted'), 1700);
+        }, 80);
+      }
+
+      // ═══════════════════════════════════
+      //  ORDENAR por fecha
+      // ═══════════════════════════════════
+      function sortByFecha(arr) {
+        function toDate(f) {
+          if (!f) return new Date(9999, 0);
+          // Formato DD/MM/YYYY
+          const dmy = f.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+          // Solo año
+          const y = f.match(/\d{4}/);
+          return y ? new Date(+y[0], 0) : new Date(9999, 0);
+        }
+        return [...arr].sort((a, b) => toDate(a.fecha) - toDate(b.fecha));
+      }
+
+      // ═══════════════════════════════════
+      //  CONSTRUIR TARJETA
+      // ═══════════════════════════════════
       function buildCard(node, depth, childMap) {
-        const color    = TYPE_COLOR[node.tipo]||'#888';
-        const children = sortByFecha(childMap[node.id]||[]);
+        const color    = TYPE_COLOR[node.tipo] || '#888';
+        const children = sortByFecha(childMap[node.id] || []);
         const hasKids  = children.length > 0;
         const isOpen   = openSet.has(node.id);
         const detOpen  = detailOpenSet.has(node.id);
         const hasDetail= !!(node.detail && node.detail.trim());
-        const detLines = (node.detail||'').split('\n').length;
-        const detShort = detLines <= 2;
+        const multiLine= (node.detail || '').split('\n').length > 2;
 
         const card = document.createElement('div');
-        card.className = `card depth-${Math.min(depth,3)}${isOpen?' open':''}`;
+        card.className = `card depth-${Math.min(depth, 3)}${isOpen ? ' open' : ''}`;
         card.dataset.id   = node.id;
         card.dataset.tipo = node.tipo;
 
         // HEAD
         const head = document.createElement('div');
         head.className = 'card-head';
-        head.onclick = (e) => {
-          if (e.target.closest('.card-actions')) return;
-          if (e.target.closest('.card-detail-toggle')) return;
+        head.onclick = e => {
+          if (e.target.closest('.card-footer') || e.target.closest('.card-detail-toggle') || e.target.closest('.hash-link')) return;
           if (hasKids) toggleOpen(node.id);
         };
 
-        // Fecha/orden
         const orderEl = document.createElement('div');
         orderEl.className = 'card-order';
         orderEl.textContent = node.fecha || '—';
 
-        // Tipo badge
         const tipoEl = document.createElement('span');
         tipoEl.className = 'card-tipo';
         tipoEl.style.background = color;
         tipoEl.textContent = node.tipo;
 
-        // Body
         const bodyEl = document.createElement('div');
         bodyEl.className = 'card-body';
 
         const labelEl = document.createElement('div');
         labelEl.className = 'card-label';
         labelEl.textContent = node.label;
-
         bodyEl.appendChild(labelEl);
 
         if (hasDetail) {
           const detEl = document.createElement('div');
-          detEl.className = 'card-detail' + (detOpen?' expanded':'');
-          detEl.id = 'det-'+node.id;
-          detEl.textContent = node.detail;
+          detEl.className = 'card-detail' + (detOpen ? ' expanded' : '');
+          // Renderizar con hashtag links
+          detEl.appendChild(renderDetail(node.detail));
           bodyEl.appendChild(detEl);
 
-          if (!detShort) {
+          if (multiLine) {
             const tog = document.createElement('div');
             tog.className = 'card-detail-toggle';
             tog.textContent = detOpen ? '▴ ver menos' : '▾ ver más';
-            tog.onclick = (e) => { e.stopPropagation(); toggleDetail(node.id); };
+            tog.onclick = e => { e.stopPropagation(); toggleDetail(node.id); };
             bodyEl.appendChild(tog);
           }
         }
 
-        // Chevron + contador
         const chevEl = document.createElement('div');
         chevEl.className = 'card-chevron';
         if (hasKids) {
@@ -573,27 +1058,35 @@
           chevEl.appendChild(cnt);
         }
 
-        // Acciones
-        const actEl = document.createElement('div');
-        actEl.className = 'card-actions';
-        actEl.innerHTML = `
-    <button class="card-btn" onclick="openModal('${node.id}')" title="Editar">✎</button>
-    <button class="card-btn del" onclick="deleteNode('${node.id}')" title="Eliminar">✕</button>`;
-
-        head.appendChild(orderEl);
         head.appendChild(tipoEl);
-        head.appendChild(bodyEl);
+        head.appendChild(orderEl);
         head.appendChild(chevEl);
-        head.appendChild(actEl);
+        head.appendChild(bodyEl);
         card.appendChild(head);
+
+        // FOOTER
+        const footer = document.createElement('div');
+        footer.className = 'card-footer';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'card-btn';
+        editBtn.innerHTML = '📝 Editar';
+        editBtn.onclick = e => { e.stopPropagation(); openModal(node.id); };
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'card-btn del';
+        delBtn.innerHTML = '❌ Eliminar';
+        delBtn.onclick = e => { e.stopPropagation(); deleteNode(node.id); };
+
+        footer.appendChild(editBtn);
+        footer.appendChild(delBtn);
+        card.appendChild(footer);
 
         // HIJOS
         if (hasKids) {
           const childrenEl = document.createElement('div');
           childrenEl.className = 'card-children';
-          children.forEach(child => {
-            childrenEl.appendChild(buildCard(child, depth+1, childMap));
-          });
+          children.forEach(child => childrenEl.appendChild(buildCard(child, depth + 1, childMap)));
           card.appendChild(childrenEl);
         }
 
@@ -601,75 +1094,68 @@
       }
 
       // ═══════════════════════════════════
-      //  RENDER PRINCIPAL
+      //  MINI ÁRBOL (vista controles)
       // ═══════════════════════════════════
-      function render() {
-        const mainTree  = document.getElementById('main-tree');
-        const mainEmpty = document.getElementById('main-empty');
-        const statsEl   = document.getElementById('stats-label');
+      function renderMiniTree(roots, childMap) {
+        const container = document.getElementById('tree-root-mini');
+        const emptyEl   = document.getElementById('mini-empty');
+        container.innerHTML = '';
 
-        mainTree.innerHTML = '';
-
-        statsEl.textContent = nodes.length===1?'1 nodo':`${nodes.length} nodos`;
-
-        if (!nodes.length) {
-          mainEmpty.style.display = 'flex';
-          mainTree.style.display  = 'none';
-          document.getElementById('empty-state').style.display = 'flex';
-          document.getElementById('tree-root').innerHTML = '';
+        if (!roots.length) {
+          emptyEl.style.display = 'flex';
           return;
         }
-        mainEmpty.style.display = 'none';
-        mainTree.style.display  = 'flex';
-        document.getElementById('empty-state').style.display = 'none';
-
-        // Construir mapa de hijos
-        const childMap = {};
-        nodes.forEach(n=>{ childMap[n.id]=[]; });
-        nodes.forEach(n=>{ if(n.padreId && childMap[n.padreId]) childMap[n.padreId].push(n); });
-
-        // Raíces: nodos sin padre válido
-        const roots = sortByFecha(nodes.filter(n => !n.padreId || !nodes.some(x=>x.id===n.padreId)));
-
-        // Renderizar en área principal
-        roots.forEach(r => mainTree.appendChild(buildCard(r, 0, childMap)));
-
-        // Mini-árbol en el panel (solo etiquetas, más compacto)
-        renderMiniTree(roots, childMap);
-      }
-
-      // Mini árbol en panel izquierdo (solo para orientación)
-      function renderMiniTree(roots, childMap) {
-        const root = document.getElementById('tree-root');
-        root.innerHTML = '';
+        emptyEl.style.display = 'none';
 
         function miniNode(n, depth) {
-          const color = TYPE_COLOR[n.tipo]||'#888';
-          const kids  = sortByFecha(childMap[n.id]||[]);
-
-          const wrap = document.createElement('div');
-          wrap.style.cssText = `padding-left:${depth*12}px;margin-bottom:2px;`;
+          const color = TYPE_COLOR[n.tipo] || '#888';
+          const kids  = sortByFecha(childMap[n.id] || []);
+          const wrap  = document.createElement('div');
+          wrap.style.cssText = `padding-left:${depth * 11}px; margin-bottom:1px;`;
 
           const row = document.createElement('div');
-          row.style.cssText = 'display:flex;align-items:center;gap:.35rem;padding:.22rem .3rem;border-radius:4px;cursor:pointer;transition:background .1s;';
-          row.onmouseenter = ()=>row.style.background='var(--s2)';
-          row.onmouseleave = ()=>row.style.background='transparent';
-          row.onclick = () => {
-            // Scroll al nodo en el árbol principal
-            const el = document.querySelector(`[data-id="${n.id}"]`);
-            if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
-          };
+          row.style.cssText = 'display:flex;align-items:center;gap:.32rem;padding:.2rem .28rem;border-radius:4px;cursor:pointer;transition:background .1s;';
+          row.onmouseenter = () => row.style.background = 'var(--s2)';
+          row.onmouseleave = () => row.style.background = 'transparent';
+          row.onclick = () => navigateToNode(n.id);
           row.innerHTML = `
       <span style="width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
-      <span style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted);flex-shrink:0;">${n.fecha||'—'}</span>
-      <span style="font-family:var(--font-mono);font-size:.62rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(n.label)}</span>`;
-          wrap.appendChild(row);
+      <span style="font-family:var(--font-mono);font-size:.57rem;color:var(--muted);flex-shrink:0;">${(n.fecha || '—').substring(0,4)}</span>
+      <span style="font-family:var(--font-mono);font-size:.6rem;white-space:nowrap;color:var(--text);">${escHtml(n.label)}</span>`;
 
-          kids.forEach(k => wrap.appendChild(miniNode(k, depth+1)));
+
+          wrap.appendChild(row);
+          kids.forEach(k => wrap.appendChild(miniNode(k, depth + 1)));
           return wrap;
         }
+        roots.forEach(r => container.appendChild(miniNode(r, 0)));
+      }
 
-        roots.forEach(r => root.appendChild(miniNode(r, 0)));
+      // ═══════════════════════════════════
+      //  RENDER
+      // ═══════════════════════════════════
+
+      function render() {
+
+        const tipo = document.getElementById('fab-filter')?.value || 'todos';
+        const TIPOS_INMUEBLE = ['matricula','compraventa','segregacion','herencia','donacion','reunion'];
+        const visibles = nodes.filter(n =>
+                                      tipo === 'todos' ? true :
+                                      tipo === 'persona' ? n.tipo === 'persona' :
+                                      n.tipo !== 'persona'
+                                     ).length;
+        const total = nodes.length;
+        document.getElementById('stats-label').textContent =
+          visibles === total ? `${total} nodos` : `${visibles} / ${total} nodos`;
+
+
+        const childMap = {};
+        nodes.forEach(n => { childMap[n.id] = []; });
+        nodes.forEach(n => { if (n.padreId && childMap[n.padreId]) childMap[n.padreId].push(n); });
+        const roots = sortByFecha(nodes.filter(n => !n.padreId || !nodes.some(x => x.id === n.padreId)));
+
+        renderMiniTree(roots, childMap);
+        applyFilter();
       }
 
       // ═══════════════════════════════════
@@ -677,32 +1163,43 @@
       // ═══════════════════════════════════
       function exportJSON() {
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([JSON.stringify(nodes,null,2)],{type:'application/json'}));
-        a.download = 'mapa-registral.json'; a.click();
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(nodes, null, 2)], { type:'application/json' }));
+        a.download = 'mapa-registral.json';
+        a.click();
       }
       function importClick() { document.getElementById('import-file').click(); }
       function importJSON(e) {
-        const file = e.target.files[0]; if(!file) return;
+        const file = e.target.files[0]; if (!file) return;
         const r = new FileReader();
         r.onload = ev => {
           try {
-            const d = JSON.parse(ev.target.result);
-            const arr = Array.isArray(d) ? d : (d.nodes||[]);
-            if (arr.length) { nodes=arr; save(); render(); }
-          } catch(err) { alert('Archivo JSON no válido'); }
-          e.target.value='';
+            const d   = JSON.parse(ev.target.result);
+            const arr = Array.isArray(d) ? d : (d.nodes || []);
+            if (arr.length) { nodes = arr; save(); render(); switchView(2); }
+            else alert('El archivo no contiene nodos.');
+          } catch(err) { alert('Archivo JSON no válido.'); }
+          e.target.value = '';
         };
         r.readAsText(file);
       }
       function clearAll() {
-        if (!confirm('¿Eliminar todos los nodos?')) return;
-        nodes=[]; openSet.clear(); detailOpenSet.clear(); save(); render();
+        if (!confirm('¿Eliminar todos los nodos del mapa?')) return;
+        nodes = []; openSet.clear(); detailOpenSet.clear(); save(); render();
       }
 
       // ═══════════════════════════════════
       //  HELPERS
       // ═══════════════════════════════════
-      function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;'); }
+      function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+      function safeAttr(s) {
+        return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      }
+      function safeId(s) {
+        return String(s).replace(/'/g,'');
+      }
+
 
       // ═══════════════════════════════════
       //  INIT
