@@ -36,10 +36,11 @@
 
       /* ── TOP BAR ── */
       .topbar{
-        display:flex; align-items:center; gap:.6rem;
-        padding:.45rem .9rem;
+        display:flex; align-items:center; gap:.4rem;
+        padding:.35rem .6rem;
         background:var(--s1); border-bottom:1px solid var(--border);
         flex-shrink:0; z-index:100;
+        overflow-x:auto;
       }
       .topbar-title{ font-family:var(--font-mono); font-size:.76rem; color:var(--accent); letter-spacing:.08em; white-space:nowrap; flex-shrink:0; }
       .topbar-sep{ width:1px; height:16px; background:var(--border2); flex-shrink:0; }
@@ -80,10 +81,11 @@
 
       /* Panel form izquierdo */
       .v1-form{
-        width:300px; flex-shrink:0;
-        background:var(--s1); border-right:1px solid var(--border);
-        display:flex; flex-direction:column; overflow:hidden;
-      }
+  width:300px; flex-shrink:0; min-width:180px; max-width:70vw;
+  background:var(--s1); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+  resize:horizontal; overflow-x:hidden;
+}
       .v1-form-scroll{ flex:1; overflow-y:auto; padding:.9rem 1rem 1.5rem; }
 
       .section-title{
@@ -357,9 +359,20 @@
 
     <!-- ── TOP BAR ── -->
     <div class="topbar">
-      <span class="topbar-title">◈ MAPA REGISTRAL</span>
+      <span class="topbar-title" onclick="abrirConfigWorker()" 
+            style="cursor:pointer;" title="Configurar Worker URL">◈ MAPA REGISTRAL</span>
       <div class="topbar-sep"></div>
       <span id="stats-label">0 nodos</span>
+      <div class="topbar-sep"></div>
+      <select id="nube-selector" onfocus="nubeActualizarSelector()" onchange="nubeCargar()"
+              style="font-family:var(--font-mono);font-size:.62rem;padding:.22rem .5rem;
+                     border:1px solid var(--border2);border-radius:5px;
+                     background:var(--s2);color:var(--text);outline:none;cursor:pointer;max-width:140px;">
+        <option value="">☁️ Mapas…</option>
+      </select>
+      <button class="btn btn-icon" onclick="nubeCargar()" title="Cargar mapa">📂</button>
+      <button class="btn btn-icon" onclick="nubeGuardar()" title="Guardar mapa">☁️</button>
+      <button class="btn btn-icon btn-danger" onclick="nubeEliminar()" title="Eliminar mapa">🗑️</button>
     </div>
 
     <!-- ══════════════════════════
@@ -525,6 +538,89 @@
       let _acMPadreId   = null;
 
       // ═══════════════════════════════════
+      //  ☁️
+      // ═══════════════════════════════════
+
+      const CF_WORKER = localStorage.getItem('_cf_worker_url');
+      const MAPA_ID   = localStorage.getItem('_ide_historial_id') || 'mapa-default';
+
+      function abrirConfigWorker() {
+        const actual = localStorage.getItem('_cf_worker_url');
+        const nueva = prompt('☁️ Cloudflare Worker URL:', actual);
+        if (nueva === null) return;
+        if (!nueva.trim()) { alert('⚠️ URL vacía, no se guardó.'); return; }
+        localStorage.setItem('_cf_worker_url', nueva.trim().replace(/\/$/, ''));
+        location.reload();
+      }
+
+      async function nubeObtenerIndice() {
+        try {
+          const resp = await fetch(`${CF_WORKER}/kv-load?id=mapa-index_${MAPA_ID}`);
+          const data = await resp.json();
+          return Array.isArray(data) ? data : [];
+        } catch(e) { return []; }
+      }
+
+      async function nubeGuardar() {
+        const nombre = prompt('Nombre del mapa:', 'mapa-principal');
+        if (!nombre?.trim()) return;
+        try {
+          await fetch(`${CF_WORKER}/kv-save`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: `mapa_${MAPA_ID}_${nombre}`, data: nodes })
+          });
+          const indice = await nubeObtenerIndice();
+          if (!indice.includes(nombre)) indice.push(nombre);
+          await fetch(`${CF_WORKER}/kv-save`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: `mapa-index_${MAPA_ID}`, data: indice })
+          });
+          await nubeActualizarSelector();
+          alert('✅ Guardado: ' + nombre);
+        } catch(e) { alert('❌ ' + e.message); }
+      }
+
+      async function nubeCargar() {
+        const nombre = document.getElementById('nube-selector')?.value;
+        if (!nombre) return;
+        try {
+          const resp = await fetch(`${CF_WORKER}/kv-load?id=mapa_${MAPA_ID}_${nombre}`);
+          const data = await resp.json();
+          if (Array.isArray(data) && data.length) {
+            nodes = data; openSet.clear(); detailOpenSet.clear();
+            save(); render(); switchView(2);
+          } else alert('⚠️ Mapa vacío o no encontrado');
+        } catch(e) { alert('❌ ' + e.message); }
+      }
+
+      async function nubeEliminar() {
+        const nombre = document.getElementById('nube-selector')?.value;
+        if (!nombre || !confirm(`¿Eliminar "${nombre}" de la nube?`)) return;
+        try {
+          await fetch(`${CF_WORKER}/kv-delete?id=mapa_${MAPA_ID}_${nombre}`);
+          const indice = (await nubeObtenerIndice()).filter(n => n !== nombre);
+          await fetch(`${CF_WORKER}/kv-save`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: `mapa-index_${MAPA_ID}`, data: indice })
+          });
+          await nubeActualizarSelector();
+        } catch(e) { alert('❌ ' + e.message); }
+      }
+
+      async function nubeActualizarSelector() {
+        const sel = document.getElementById('nube-selector');
+        if (!sel) return;
+        const indice = await nubeObtenerIndice();
+        sel.innerHTML = '<option value="">☁️ Mapas…</option>';
+        indice.forEach(n => {
+          const opt = document.createElement('option');
+          opt.value = n; opt.textContent = n;
+          sel.appendChild(opt);
+        });
+      }
+
+
+      // ═══════════════════════════════════
       //  EXPORT PDF
       // ═══════════════════════════════════
       function exportPDF() {
@@ -538,8 +634,8 @@
 
         function nodeVisible(n) {
           return tipo === 'todos' ? true
-            : tipo === 'persona' ? n.tipo === 'persona'
-            : n.tipo !== 'persona';
+          : tipo === 'persona' ? n.tipo === 'persona'
+          : n.tipo !== 'persona';
         }
         function hasVisible(n) {
           if (nodeVisible(n)) return true;
@@ -600,15 +696,15 @@
                   <span style="font-size:9px;font-family:monospace;color:#888;
                                background:#f0f3fa;border:1px solid #d0d8eb;border-radius:3px;
                                padding:1px 5px;">${n.fecha || '—'}</span>
-                </div>
+      </div>
                 <div style="font-family:monospace;font-size:11px;font-weight:700;
                             line-height:1.3;word-break:break-word;">${n.label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-              </div>
+      </div>
               ${n.detail ? `<div style="padding:6px 10px 8px;font-size:9.5px;color:#444;
                                         font-family:sans-serif;line-height:1.5;">${detailLines}</div>` : ''}
               ${kidsHTML ? `<div style="padding:6px 8px 8px;border-top:1px solid #e8ecf5;
                                         background:#f7f9fd;">${kidsHTML}</div>` : ''}
-            </div>`;
+      </div>`;
         }
 
         const titulo = tipo === 'persona' ? 'Personas' : tipo === 'inmueble' ? 'Inmuebles' : 'Mapa Registral';
@@ -622,21 +718,21 @@
             body { font-family: sans-serif; margin: 20px; background: #fff; }
             h2 { font-size: 14px; margin-bottom: 4px; color: #1a2038; }
             .sub { font-size: 10px; color: #888; margin-bottom: 16px; }
-          </style>
-        </head><body>
+      </style>
+      </head><body>
           <h2>◈ MAPA REGISTRAL — ${titulo}</h2>
           <div class="sub">Generado: ${fecha} · ${nodes.length} nodos totales</div>
           ${body}
-        </body></html>`;
+      </body></html>`;
 
         const win = window.open('', '_blank');
         win.document.write(html);
         win.document.close();
         setTimeout(() => win.print(), 600);
       }
-      
-      
-      
+
+
+
       // ═══════════════════════════════════
       //  PERSISTENCIA
       // ═══════════════════════════════════
